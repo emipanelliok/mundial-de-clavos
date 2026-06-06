@@ -34,33 +34,43 @@ export default async function HomePage() {
     <main className="min-h-screen flex flex-col">
       {/* Hero */}
       <section className="bg-ink px-4 pt-10 pb-8">
-        <div className="max-w-5xl mx-auto text-center md:text-left">
-          <p className="text-cream/40 font-display text-sm tracking-[0.3em] mb-1">ARGENTINA · 2026</p>
+        <div className="max-w-5xl mx-auto">
+          <div className="flex flex-col md:flex-row md:items-center md:gap-12">
 
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/hero-logo.png"
-            alt="Mundial de Clavos 2026"
-            className="h-32 sm:h-40 md:h-48 w-auto mb-4 object-contain mx-auto md:mx-0"
-          />
-
-          <p className="text-cream/50 text-sm mb-6 max-w-xl leading-relaxed mx-auto md:mx-0">
-            El torneo definitivo del auto más clavo de la historia.
-            Clasificá los peores, votá en cada ronda, y coroná al Gran Campeón.
-          </p>
-
-          {/* Fase actual — única aparición del rojo */}
-          <div className="bg-crimson text-white rounded-2xl px-4 py-3 mb-4 max-w-xl mx-auto md:mx-0">
-            <div className="flex items-center gap-2 mb-0.5">
-              <span className="w-2 h-2 rounded-full bg-current opacity-70 animate-pulse shrink-0" />
-              <p className="text-xs font-semibold opacity-70 uppercase tracking-widest">ESTAMOS EN</p>
+            {/* Columna izquierda: logo + descripción */}
+            <div className="flex-1 flex flex-col items-center md:items-start text-center md:text-left">
+              <p className="text-cream/40 font-display text-sm tracking-[0.3em] mb-2">ARGENTINA · 2026</p>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/hero-logo.png"
+                alt="Mundial de Clavos 2026"
+                className="h-32 sm:h-40 md:h-48 w-auto mb-4 object-contain"
+              />
+              <p className="text-cream/50 text-sm leading-relaxed max-w-sm">
+                El torneo definitivo del auto más clavo de la historia.
+                Clasificá los peores, votá en cada ronda, y coroná al Gran Campeón.
+              </p>
             </div>
-            <p className="font-display text-3xl leading-none">{phaseInfo.label}</p>
-            <p className="text-sm opacity-80 mt-1">{phaseInfo.desc}</p>
-            {phaseEndsAt && <CountdownTimer endsAt={phaseEndsAt} label="Cierra en" />}
+
+            {/* Columna derecha: badge */}
+            <div className="mt-6 md:mt-0 md:w-96 flex flex-col">
+              <div className="bg-crimson text-white rounded-2xl px-5 py-4 h-full flex flex-col justify-center">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="w-2 h-2 rounded-full bg-current opacity-70 animate-pulse shrink-0" />
+                  <p className="text-xs font-semibold opacity-70 uppercase tracking-widest">ESTAMOS EN</p>
+                </div>
+                <p className="font-display text-4xl leading-none">{phaseInfo.label}</p>
+                <p className="text-sm opacity-80 mt-1">{phaseInfo.desc}</p>
+                {phaseEndsAt && <CountdownTimer endsAt={phaseEndsAt} label="Cierra en" />}
+              </div>
+            </div>
+
           </div>
 
-          <PhaseBar phase={phase} />
+          {/* Timeline a todo el ancho */}
+          <div className="mt-6">
+            <PhaseBar phase={phase} />
+          </div>
         </div>
       </section>
 
