@@ -1,20 +1,20 @@
 import Link from "next/link";
 import { getTournamentStats, getTopNominations, getRandomContenders } from "./actions";
 import PhaseBar from "@/components/PhaseBar";
-import CarSlot from "@/components/CarSlot";
 import { Trophy, Users, Car, ChevronRight, Lock } from "lucide-react";
+import HowItWorks from "@/components/HowItWorks";
 import type { TournamentPhase } from "@/lib/db";
 
 export const revalidate = 30;
 
-const PHASE_INFO: Record<string, { label: string; desc: string; color: string }> = {
-  eliminatorias: { label: "CLASIFICACIONES",   desc: "Votá los autos más clavos. Los más votados van al Mundial.",  color: "bg-rust text-white" },
-  grupos:        { label: "FASE DE GRUPOS",     desc: "Los grupos están armados. Votá quién pasa de ronda.",        color: "bg-crimson text-white" },
-  octavos:       { label: "OCTAVOS DE FINAL",   desc: "16 clavos quedan. Solo 8 avanzan. Votá ahora.",              color: "bg-crimson text-white" },
-  cuartos:       { label: "CUARTOS DE FINAL",   desc: "Los 8 mejores se enfrentan. Elegí al más clavo.",            color: "bg-crimson text-white" },
-  semifinal:     { label: "SEMIFINAL",          desc: "Solo quedan 4. ¿Quién llega a la final?",                    color: "bg-gold text-ink" },
-  final:         { label: "LA GRAN FINAL",      desc: "Dos clavos. Un campeón. Votá al peor auto de la historia.",  color: "bg-gold text-ink" },
-  terminado:     { label: "CAMPEÓN CORONADO",   desc: "El Mundial de Clavos terminó. Conocé al gran ganador.",      color: "bg-ink text-cream" },
+const PHASE_INFO: Record<string, { label: string; desc: string }> = {
+  eliminatorias: { label: "CLASIFICACIONES",  desc: "Votá los autos más clavos. Los más votados van al Mundial." },
+  grupos:        { label: "FASE DE GRUPOS",   desc: "Los grupos están armados. Votá quién pasa de ronda." },
+  octavos:       { label: "OCTAVOS DE FINAL", desc: "16 clavos quedan. Solo 8 avanzan. Votá ahora." },
+  cuartos:       { label: "CUARTOS DE FINAL", desc: "Los 8 mejores se enfrentan. Elegí al más clavo." },
+  semifinal:     { label: "SEMIFINAL",        desc: "Solo quedan 4. ¿Quién llega a la final?" },
+  final:         { label: "LA GRAN FINAL",    desc: "Dos clavos. Un campeón. Votá al peor auto de la historia." },
+  terminado:     { label: "CAMPEÓN CORONADO", desc: "El Mundial de Clavos terminó. Conocé al gran ganador." },
 };
 
 export default async function HomePage() {
@@ -34,30 +34,21 @@ export default async function HomePage() {
       {/* Hero */}
       <section className="bg-ink px-4 pt-10 pb-8">
         <div className="max-w-5xl mx-auto">
-          <p className="text-gold font-display text-sm tracking-[0.3em] mb-1">ARGENTINA · 2026</p>
+          <p className="text-cream/40 font-display text-sm tracking-[0.3em] mb-1">ARGENTINA · 2026</p>
 
-          {/* Title + slot — dos columnas en desktop */}
-          <div className="flex flex-col md:flex-row md:items-end md:justify-between md:gap-8 mb-6">
-            <h1 className="font-display text-6xl sm:text-7xl md:text-8xl leading-none shrink-0">
-              <span className="text-cream">MUNDIAL</span>
-              <br />
-              <span className="text-crimson">DE CLAVOS</span>
-            </h1>
-
-            {/* Slot machine */}
-            <div className="mt-4 md:mt-0 md:text-right">
-              <p className="text-cream/40 text-xs uppercase tracking-widest mb-1">¿Quién será el más clavo?</p>
-              <CarSlot cars={contenders.cars.length >= 6 ? contenders.cars : undefined} />
-            </div>
-          </div>
+          <h1 className="font-display text-6xl sm:text-7xl md:text-8xl leading-none mb-4">
+            <span className="text-white">MUNDIAL</span>
+            <br />
+            <span className="text-white">DE CLAVOS</span>
+          </h1>
 
           <p className="text-cream/50 text-sm mb-6 max-w-xl leading-relaxed">
             El torneo definitivo del auto más clavo de la historia.
             Clasificá los peores, votá en cada ronda, y coroná al Gran Campeón.
           </p>
 
-          {/* Fase actual */}
-          <div className={`${phaseInfo.color} rounded-2xl px-4 py-3 mb-4 max-w-xl`}>
+          {/* Fase actual — única aparición del rojo */}
+          <div className="bg-crimson rounded-2xl px-4 py-3 mb-4 max-w-xl">
             <div className="flex items-center gap-2 mb-0.5">
               <span className="w-2 h-2 rounded-full bg-current opacity-70 animate-pulse shrink-0" />
               <p className="text-xs font-semibold opacity-70 uppercase tracking-widest">ESTAMOS EN</p>
@@ -125,6 +116,7 @@ export default async function HomePage() {
               </div>
               <ChevronRight size={20} className="text-muted shrink-0" />
             </Link>
+            <HowItWorks />
           </div>
 
           {/* Right: Contenders / Ranking */}
