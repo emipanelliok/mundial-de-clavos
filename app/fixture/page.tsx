@@ -70,7 +70,7 @@ export default async function FixturePage() {
 
       <footer className="px-4 py-6 text-center">
         <p className="text-xs text-muted">
-          Mundial de Clavos 2025 · por{" "}
+          Mundial de Clavos 2026 · por{" "}
           <a
             href="https://x.com/emipanelli"
             target="_blank"

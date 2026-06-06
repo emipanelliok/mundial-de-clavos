@@ -16,10 +16,10 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Mundial de Clavos 2025",
+  title: "Mundial de Clavos 2026",
   description: "El torneo definitivo del auto más clavo de la historia argentina. Nominá, votá, y elegí al Gran Campeón.",
   openGraph: {
-    title: "Mundial de Clavos 2025",
+    title: "Mundial de Clavos 2026",
     description: "El torneo definitivo del auto más clavo de la historia argentina.",
     type: "website",
   },

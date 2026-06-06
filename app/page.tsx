@@ -18,7 +18,7 @@ export default async function HomePage() {
       <section className="bg-ink text-white px-4 pt-10 pb-8">
         <div className="max-w-lg mx-auto">
           <p className="text-gold font-display text-sm tracking-[0.3em] mb-1">
-            ARGENTINA · 2025
+            ARGENTINA · 2026
           </p>
           <h1 className="font-display text-6xl sm:text-7xl leading-none mb-2">
             MUNDIAL
@@ -130,7 +130,7 @@ export default async function HomePage() {
 
       <footer className="mt-auto px-4 py-6 text-center">
         <p className="text-xs text-muted">
-          Mundial de Clavos 2025 · por{" "}
+          Mundial de Clavos 2026 · por{" "}
           <a
             href="https://x.com/emipanelli"
             target="_blank"

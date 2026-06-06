@@ -1,4 +1,4 @@
--- Mundial de Clavos 2025 — Schema
+-- Mundial de Clavos 2026 — Schema
 
 -- Tournament configuration (singleton)
 create table if not exists tournament_config (
