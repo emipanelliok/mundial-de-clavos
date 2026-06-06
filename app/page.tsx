@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getTournamentStats, getTopNominations } from "./actions";
+import { getTournamentStats, getTopNominations, getRandomContenders } from "./actions";
 import PhaseBar from "@/components/PhaseBar";
 import { Trophy, Users, Car, ChevronRight, Lock } from "lucide-react";
 import CountdownTimer from "@/components/CountdownTimer";
@@ -18,9 +18,10 @@ const PHASE_INFO: Record<string, { label: string; desc: string; color: string }>
 };
 
 export default async function HomePage() {
-  const [stats, topCars] = await Promise.all([
+  const [stats, topCars, contenders] = await Promise.all([
     getTournamentStats(),
     getTopNominations(3),
+    getRandomContenders(6),
   ]);
 
   const phase = stats.phase as TournamentPhase;
@@ -102,28 +103,22 @@ export default async function HomePage() {
         </Link>
       </section>
 
-      {/* Top 3 + sorpresa (durante clasificación) */}
-      {isEliminatorias && topCars.length > 0 && (
+      {/* Contenders aleatorios — sin orden, sin votos */}
+      {isEliminatorias && contenders.cars.length > 0 && (
         <section className="px-4 pb-8 max-w-lg mx-auto w-full">
           <div className="bg-white border-2 border-border rounded-2xl overflow-hidden">
             <div className="px-4 pt-4 pb-3 border-b border-border">
-              <p className="font-display text-xl text-ink tracking-wide">LOS PUNTEROS</p>
-              <p className="text-xs text-muted">Solo los 3 primeros · el resto es secreto</p>
+              <p className="font-display text-xl text-ink tracking-wide">ALGUNOS QUE ESTÁN EN LA CARRERA</p>
+              <p className="text-xs text-muted">{contenders.total} autos candidatos · el ranking es secreto</p>
             </div>
-            <div className="divide-y divide-border">
-              {topCars.map((car, i) => (
-                <div key={car.car_name} className="flex items-center gap-3 px-4 py-3">
-                  <span className={`font-display text-2xl w-7 text-center shrink-0 ${i === 0 ? "text-gold" : i === 1 ? "text-muted" : "text-crimson/60"}`}>
-                    {i + 1}
-                  </span>
-                  <span className="flex-1 text-sm text-ink font-medium truncate">{car.car_name}</span>
-                  <span className="text-xs text-muted bg-surface px-2 py-1 rounded-lg shrink-0">
-                    {car.total_nominations} {car.total_nominations === 1 ? "voto" : "votos"}
-                  </span>
-                </div>
+            <div className="px-4 py-4 flex flex-wrap gap-2">
+              {contenders.cars.map((car) => (
+                <span key={car} className="bg-surface border border-border text-ink text-sm px-3 py-1.5 rounded-full">
+                  {car}
+                </span>
               ))}
             </div>
-            <div className="px-4 py-3 bg-surface flex items-center gap-2">
+            <div className="px-4 py-3 bg-surface border-t border-border flex items-center gap-2">
               <Lock size={13} className="text-muted shrink-0" />
               <p className="text-xs text-muted">El ranking completo se revela al cerrar la clasificación.</p>
             </div>

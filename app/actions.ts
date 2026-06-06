@@ -113,6 +113,24 @@ export async function getTopNominations(limit = 20) {
   }
 }
 
+export async function getRandomContenders(limit = 6) {
+  if (!IS_CONFIGURED || !sql) return { cars: [] as string[], total: 0 };
+  try {
+    const [result, [countRow]] = await Promise.all([
+      sql`
+        SELECT car_name FROM nomination_cars
+        GROUP BY car_name
+        ORDER BY random()
+        LIMIT ${limit}
+      `,
+      sql`SELECT count(distinct car_name)::int AS n FROM nomination_cars`,
+    ]);
+    return { cars: (result ?? []).map((r: { car_name: string }) => r.car_name), total: countRow?.n ?? 0 };
+  } catch {
+    return { cars: [] as string[], total: 0 };
+  }
+}
+
 export async function getTournamentStats() {
   if (!IS_CONFIGURED || !sql) {
     return { totalVoters: 0, totalNominations: 0, phase: "eliminatorias", maxQualifiers: 32, nominationsOpen: true, phaseEndsAt: null };
