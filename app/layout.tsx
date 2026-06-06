@@ -23,7 +23,16 @@ export const metadata: Metadata = {
     title: "Mundial de Clavos 2026",
     description: "El torneo definitivo del auto más clavo de la historia argentina.",
     type: "website",
+    url: "https://mundial-de-clavos.vercel.app",
+    images: [{ url: "/og.png", width: 1600, height: 900, alt: "Mundial de Clavos 2026" }],
   },
+  twitter: {
+    card: "summary_large_image",
+    title: "Mundial de Clavos 2026",
+    description: "El torneo definitivo del auto más clavo de la historia argentina.",
+    images: ["/og.png"],
+  },
+  metadataBase: new URL("https://mundial-de-clavos.vercel.app"),
 };
 
 export default function RootLayout({
