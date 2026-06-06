@@ -55,12 +55,12 @@ export default async function HomePage() {
             {/* Columna derecha: badge */}
             <div className="mt-6 md:mt-0 md:w-96 flex flex-col">
               <div className="bg-crimson text-white rounded-2xl px-5 py-4 h-full flex flex-col justify-center">
-                <div className="flex items-center gap-2 mb-1">
+                <div className="flex items-center gap-2 mb-0.5">
                   <span className="w-2 h-2 rounded-full bg-current opacity-70 animate-pulse shrink-0" />
-                  <p className="text-xs font-semibold opacity-70 uppercase tracking-widest">ESTAMOS EN</p>
+                  <p className="text-[11px] font-semibold opacity-70 uppercase tracking-widest">ESTAMOS EN</p>
                 </div>
-                <p className="font-display text-4xl leading-none">{phaseInfo.label}</p>
-                <p className="text-sm opacity-80 mt-1">{phaseInfo.desc}</p>
+                <p className="font-display text-3xl leading-none">{phaseInfo.label}</p>
+                <p className="text-sm opacity-80 mt-1 leading-snug">{phaseInfo.desc}</p>
                 {phaseEndsAt && <CountdownTimer endsAt={phaseEndsAt} label="Cierra en" />}
               </div>
             </div>

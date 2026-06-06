@@ -26,31 +26,28 @@ export default function CountdownTimer({ endsAt, label = "Cierra en" }: { endsAt
     </div>
   );
 
+  const Unit = ({ value, unit }: { value: number; unit: string }) => (
+    <div className="flex flex-col items-center min-w-[2.2rem]">
+      <span className="font-display text-2xl leading-none tabular-nums">{String(value).padStart(2, "0")}</span>
+      <span className="text-[9px] opacity-50 uppercase tracking-wider mt-0.5">{unit}</span>
+    </div>
+  );
+
   return (
-    <div className="mt-2">
-      <p className="text-xs font-semibold opacity-70 uppercase tracking-widest mb-1.5 text-center md:text-left">{label}</p>
-      <div className="flex items-end gap-2 justify-center md:justify-start">
+    <div className="mt-3 flex items-center gap-2.5 justify-center md:justify-start flex-wrap">
+      <span className="text-[11px] font-semibold opacity-60 uppercase tracking-widest">{label}</span>
+      <div className="flex items-center gap-1">
         {left.d > 0 && (
-          <div className="text-center">
-            <span className="font-display text-3xl leading-none">{String(left.d).padStart(2, "0")}</span>
-            <p className="text-[10px] opacity-60 uppercase tracking-wider mt-0.5">días</p>
-          </div>
+          <>
+            <Unit value={left.d} unit="d" />
+            <span className="font-display text-lg opacity-30 mb-3">:</span>
+          </>
         )}
-        {left.d > 0 && <span className="font-display text-2xl opacity-40 mb-1">:</span>}
-        <div className="text-center">
-          <span className="font-display text-3xl leading-none">{String(left.h).padStart(2, "0")}</span>
-          <p className="text-[10px] opacity-60 uppercase tracking-wider mt-0.5">hs</p>
-        </div>
-        <span className="font-display text-2xl opacity-40 mb-1">:</span>
-        <div className="text-center">
-          <span className="font-display text-3xl leading-none">{String(left.m).padStart(2, "0")}</span>
-          <p className="text-[10px] opacity-60 uppercase tracking-wider mt-0.5">min</p>
-        </div>
-        <span className="font-display text-2xl opacity-40 mb-1">:</span>
-        <div className="text-center">
-          <span className="font-display text-3xl leading-none">{String(left.s).padStart(2, "0")}</span>
-          <p className="text-[10px] opacity-60 uppercase tracking-wider mt-0.5">seg</p>
-        </div>
+        <Unit value={left.h} unit="hs" />
+        <span className="font-display text-lg opacity-30 mb-3">:</span>
+        <Unit value={left.m} unit="min" />
+        <span className="font-display text-lg opacity-30 mb-3">:</span>
+        <Unit value={left.s} unit="seg" />
       </div>
     </div>
   );
