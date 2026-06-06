@@ -57,7 +57,7 @@ export default async function NominacionesPage() {
 
       <footer className="px-4 py-4 text-center">
         <p className="text-xs text-muted">
-          Un voto por persona · No se puede votar dos veces
+          Un voto por persona · No se puede clasificar dos veces
         </p>
       </footer>
     </main>
