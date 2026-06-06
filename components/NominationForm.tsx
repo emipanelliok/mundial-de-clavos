@@ -139,7 +139,7 @@ export default function NominationForm() {
       >
         {loading
           ? <span className="inline-block w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-          : <><Send size={18} />CLASIFICAR AL MUNDIAL</>
+          : <><Send size={18} />CARGAR MIS CANDIDATOS</>
         }
       </button>
 

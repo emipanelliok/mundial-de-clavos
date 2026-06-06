@@ -108,7 +108,7 @@ export default async function HomePage() {
                 className="flex items-center justify-between w-full bg-rust text-white rounded-2xl px-5 py-4 shadow-lg shadow-rust/25 hover:bg-rust-dark active:scale-[0.98] transition-all"
               >
                 <div>
-                  <p className="font-display text-2xl tracking-wide">CLASIFICAR AL MUNDIAL</p>
+                  <p className="font-display text-2xl tracking-wide">CARGAR MIS CANDIDATOS</p>
                   <p className="text-white/70 text-xs mt-0.5">Elegí los autos más clavos · hasta 5 por persona</p>
                 </div>
                 <ChevronRight size={20} className="shrink-0" />
