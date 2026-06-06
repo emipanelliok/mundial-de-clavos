@@ -44,15 +44,15 @@ export async function submitNomination(
     if (existing)
       return { success: false, error: `@${handle} ya nominó. Solo se puede votar una vez.` };
 
-    const [nomination] = await sql`
-      INSERT INTO nominations (twitter_handle, ip_address, email)
-      VALUES (${handle}, ${ip}, ${cleanEmail})
-      RETURNING id
-    `;
-
+    // Atómico: inserta nominación + autos en un solo statement (sin huérfanos)
     await sql`
+      WITH new_nom AS (
+        INSERT INTO nominations (twitter_handle, ip_address, email)
+        VALUES (${handle}, ${ip}, ${cleanEmail})
+        RETURNING id
+      )
       INSERT INTO nomination_cars (nomination_id, car_name)
-      SELECT ${nomination.id}, unnest(${uniqueCars}::text[])
+      SELECT new_nom.id, unnest(${uniqueCars}::text[]) FROM new_nom
     `;
 
     return {

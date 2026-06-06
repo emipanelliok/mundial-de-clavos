@@ -29,9 +29,9 @@ async function getAdminData() {
       sql`SELECT count(*)::int AS n FROM nomination_cars`,
       sql`
         SELECT n.twitter_handle, n.email, n.created_at,
-               array_agg(nc.car_name ORDER BY nc.created_at) AS cars
+               array_remove(array_agg(nc.car_name ORDER BY nc.created_at), NULL) AS cars
         FROM nominations n
-        JOIN nomination_cars nc ON nc.nomination_id = n.id
+        LEFT JOIN nomination_cars nc ON nc.nomination_id = n.id
         GROUP BY n.id, n.twitter_handle, n.email, n.created_at
         ORDER BY n.created_at DESC
         LIMIT 100

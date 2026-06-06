@@ -223,7 +223,11 @@ function NomCard({ nom, onDelete }: {
         <p className="text-xs text-muted mb-2 truncate">✉ {nom.email}</p>
       )}
       <div className="flex flex-wrap gap-1.5">
-        {nom.cars.map((car) => (
+        {nom.cars.length === 0 ? (
+          <span className="bg-crimson/10 border border-crimson/20 text-crimson text-xs px-2 py-1 rounded-lg">
+            ⚠ Sin autos (registro huérfano — borralo)
+          </span>
+        ) : nom.cars.map((car) => (
           <span key={car} className="bg-surface border border-border text-ink text-xs px-2 py-1 rounded-lg">{car}</span>
         ))}
       </div>
