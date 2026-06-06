@@ -103,8 +103,8 @@ export default async function HomePage() {
         </Link>
       </section>
 
-      {/* Contenders aleatorios — sin orden, sin votos */}
-      {isEliminatorias && contenders.cars.length > 0 && (
+      {/* Contenders aleatorios — solo cuando hay suficientes para que sea random de verdad */}
+      {isEliminatorias && contenders.total >= 10 && contenders.cars.length > 0 && (
         <section className="px-4 pb-8 max-w-lg mx-auto w-full">
           <div className="bg-white border-2 border-border rounded-2xl overflow-hidden">
             <div className="px-4 pt-4 pb-3 border-b border-border">
