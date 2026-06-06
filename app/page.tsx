@@ -146,14 +146,7 @@ export default async function HomePage() {
                 </div>
               ))}
             </div>
-          ) : (
-            <div className="hidden md:flex items-center justify-center bg-surface/50 border-2 border-dashed border-border rounded-2xl p-8 text-center">
-              <div>
-                <p className="font-display text-4xl text-muted">?</p>
-                <p className="text-xs text-muted mt-1">El ranking se revela<br />al cerrar la clasificación</p>
-              </div>
-            </div>
-          )}
+          ) : null}
         </div>
       </section>
 
