@@ -1,50 +1,38 @@
-import { supabase, IS_CONFIGURED } from "@/lib/supabase";
+import { sql, IS_CONFIGURED } from "@/lib/db";
 import AdminPanel from "@/components/AdminPanel";
-import type { TournamentPhase } from "@/lib/supabase";
+import type { TournamentPhase } from "@/lib/db";
 
 export const revalidate = 0;
 
 async function getAdminData() {
-  if (!IS_CONFIGURED) {
-    return { config: { phase: "eliminatorias" as TournamentPhase, max_qualifiers: 32, nominations_open: true }, topCars: [], totalVoters: 0 };
+  if (!IS_CONFIGURED || !sql) {
+    return {
+      config: { phase: "eliminatorias" as TournamentPhase, max_qualifiers: 32, nominations_open: true },
+      topCars: [],
+      totalVoters: 0,
+    };
   }
   try {
-    const [
-      { data: config },
-      { data: topCars },
-      { count: totalVoters },
-    ] = await Promise.all([
-      supabase
-        .from("tournament_config")
-        .select("phase, max_qualifiers, nominations_open")
-        .single(),
-      supabase
-        .from("car_nomination_counts")
-        .select("car_name, total_nominations")
-        .order("total_nominations", { ascending: false })
-        .limit(50),
-      supabase
-        .from("nominations")
-        .select("*", { count: "exact", head: true }),
+    const [[config], topCars, [voters]] = await Promise.all([
+      sql`SELECT phase, max_qualifiers, nominations_open FROM tournament_config WHERE id = 1`,
+      sql`
+        SELECT car_name, count(*)::int AS total_nominations
+        FROM nomination_cars
+        GROUP BY car_name
+        ORDER BY total_nominations DESC
+        LIMIT 50
+      `,
+      sql`SELECT count(*)::int AS n FROM nominations`,
     ]);
-
     return {
-      config: config ?? {
-        phase: "eliminatorias" as TournamentPhase,
-        max_qualifiers: 32,
-        nominations_open: true,
-      },
-      topCars: topCars ?? [],
-      totalVoters: totalVoters ?? 0,
+      config: config ?? { phase: "eliminatorias" as TournamentPhase, max_qualifiers: 32, nominations_open: true },
+      topCars: (topCars ?? []) as { car_name: string; total_nominations: number }[],
+      totalVoters: voters?.n ?? 0,
     };
   } catch {
     return {
-      config: {
-        phase: "eliminatorias" as TournamentPhase,
-        max_qualifiers: 32,
-        nominations_open: true,
-      },
-      topCars: [],
+      config: { phase: "eliminatorias" as TournamentPhase, max_qualifiers: 32, nominations_open: true },
+      topCars: [] as { car_name: string; total_nominations: number }[],
       totalVoters: 0,
     };
   }
@@ -57,9 +45,7 @@ export default async function AdminPage() {
     <main className="min-h-screen bg-ink text-white px-4 py-6">
       <div className="max-w-lg mx-auto space-y-6">
         <div>
-          <p className="text-rust font-display text-sm tracking-widest">
-            PANEL DE CONTROL
-          </p>
+          <p className="text-rust font-display text-sm tracking-widest">PANEL DE CONTROL</p>
           <h1 className="font-display text-4xl text-white">ADMIN</h1>
         </div>
         <AdminPanel

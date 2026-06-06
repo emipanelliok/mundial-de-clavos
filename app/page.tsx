@@ -2,7 +2,7 @@ import Link from "next/link";
 import { getTournamentStats, getTopNominations } from "./actions";
 import PhaseBar from "@/components/PhaseBar";
 import { Trophy, Users, Car, ChevronRight } from "lucide-react";
-import type { TournamentPhase } from "@/lib/supabase";
+import type { TournamentPhase } from "@/lib/db";
 
 export const revalidate = 30;
 

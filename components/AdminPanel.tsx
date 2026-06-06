@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { updateTournamentConfig } from "@/app/admin/actions";
-import type { TournamentPhase } from "@/lib/supabase";
+import type { TournamentPhase } from "@/lib/db";
 import { Users, Lock, Unlock, Trophy } from "lucide-react";
 
 const PHASES: { key: TournamentPhase; label: string }[] = [

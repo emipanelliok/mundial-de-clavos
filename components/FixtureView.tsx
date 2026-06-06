@@ -1,4 +1,4 @@
-import type { TournamentCar, TournamentPhase } from "@/lib/supabase";
+import type { TournamentCar, TournamentPhase } from "@/lib/db";
 
 const GROUP_LETTERS = ["A", "B", "C", "D", "E", "F", "G", "H"];
 

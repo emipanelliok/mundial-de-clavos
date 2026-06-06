@@ -1,39 +1,28 @@
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
-import { supabase, IS_CONFIGURED } from "@/lib/supabase";
+import { sql, IS_CONFIGURED } from "@/lib/db";
 import FixtureView from "@/components/FixtureView";
 import PhaseBar from "@/components/PhaseBar";
-import type { TournamentPhase, TournamentCar } from "@/lib/supabase";
+import type { TournamentPhase, TournamentCar } from "@/lib/db";
 
 export const revalidate = 60;
 
 async function getFixtureData() {
-  if (!IS_CONFIGURED) {
+  if (!IS_CONFIGURED || !sql) {
     return { phase: "eliminatorias" as TournamentPhase, maxQualifiers: 32, cars: [] as TournamentCar[] };
   }
   try {
-    const [{ data: config }, { data: cars }] = await Promise.all([
-      supabase
-        .from("tournament_config")
-        .select("phase, max_qualifiers")
-        .single(),
-      supabase
-        .from("tournament_cars")
-        .select("*")
-        .order("seed", { ascending: true }),
+    const [[config], cars] = await Promise.all([
+      sql`SELECT phase, max_qualifiers FROM tournament_config WHERE id = 1`,
+      sql`SELECT * FROM tournament_cars ORDER BY seed ASC NULLS LAST`,
     ]);
-
     return {
       phase: (config?.phase ?? "eliminatorias") as TournamentPhase,
       maxQualifiers: config?.max_qualifiers ?? 32,
       cars: (cars ?? []) as TournamentCar[],
     };
   } catch {
-    return {
-      phase: "eliminatorias" as TournamentPhase,
-      maxQualifiers: 32,
-      cars: [] as TournamentCar[],
-    };
+    return { phase: "eliminatorias" as TournamentPhase, maxQualifiers: 32, cars: [] as TournamentCar[] };
   }
 }
 
@@ -60,23 +49,14 @@ export default async function FixturePage() {
 
       <div className="flex-1 px-4 py-6">
         <div className="max-w-lg mx-auto">
-          <FixtureView
-            phase={phase}
-            tournamentCars={cars}
-            maxQualifiers={maxQualifiers}
-          />
+          <FixtureView phase={phase} tournamentCars={cars} maxQualifiers={maxQualifiers} />
         </div>
       </div>
 
       <footer className="px-4 py-6 text-center">
         <p className="text-xs text-muted">
           Mundial de Clavos 2026 · por{" "}
-          <a
-            href="https://x.com/emipanelli"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-rust underline"
-          >
+          <a href="https://x.com/emipanelli" target="_blank" rel="noopener noreferrer" className="text-rust underline">
             @emipanelli
           </a>
         </p>

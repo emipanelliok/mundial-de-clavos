@@ -1,4 +1,4 @@
-import type { TournamentPhase } from "@/lib/supabase";
+import type { TournamentPhase } from "@/lib/db";
 
 const PHASES: { key: TournamentPhase; label: string; short: string }[] = [
   { key: "eliminatorias", label: "Eliminatorias", short: "ELIM." },
