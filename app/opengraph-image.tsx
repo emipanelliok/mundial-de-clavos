@@ -18,28 +18,17 @@ async function loadFont(): Promise<ArrayBuffer | null> {
   }
 }
 
-async function loadLogo(baseUrl: string): Promise<string | null> {
-  try {
-    const res = await fetch(`${baseUrl}/logo.png`);
-    if (!res.ok) return null;
-    const buf = await res.arrayBuffer();
-    const b64 = Buffer.from(buf).toString("base64");
-    return `data:image/png;base64,${b64}`;
-  } catch {
-    return null;
-  }
-}
-
 export default async function OGImage() {
   const baseUrl = process.env.VERCEL_URL
     ? `https://${process.env.VERCEL_URL}`
-    : "http://localhost:3000";
+    : process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 
-  const [fontData, logoSrc] = await Promise.all([
+  const [fontData, logoRes] = await Promise.all([
     loadFont(),
-    loadLogo(baseUrl),
+    fetch(`${baseUrl}/logo.png`).catch(() => null),
   ]);
 
+  const hasLogo = logoRes?.ok === true;
   const font = fontData ? "Bebas Neue" : "Impact, Arial Black, sans-serif";
 
   return new ImageResponse(
@@ -56,29 +45,19 @@ export default async function OGImage() {
           overflow: "hidden",
         }}
       >
-        {/* Decorative grid lines */}
+        {/* Background grid */}
         <div style={{
-          position: "absolute",
-          inset: 0,
-          display: "flex",
+          position: "absolute", inset: 0, display: "flex",
           backgroundImage: "linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)",
           backgroundSize: "60px 60px",
         }} />
 
         {/* Left column */}
-        <div style={{
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "space-between",
-          flex: 1,
-          zIndex: 1,
-        }}>
-          {/* Top */}
+        <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", flex: 1, zIndex: 1 }}>
           <div style={{ color: "#F0C040", fontSize: 22, letterSpacing: "0.3em", fontFamily: font }}>
             ARGENTINA · 2026
           </div>
 
-          {/* Title */}
           <div style={{ display: "flex", flexDirection: "column", lineHeight: 0.9 }}>
             <div style={{ color: "#FFFFFF", fontSize: 148, fontFamily: font, letterSpacing: "-1px" }}>
               MUNDIAL
@@ -88,19 +67,12 @@ export default async function OGImage() {
             </div>
           </div>
 
-          {/* Bottom badge + URL */}
           <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
             <div style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-              background: "#E31837",
-              color: "#FFFFFF",
-              padding: "12px 24px",
-              borderRadius: 14,
-              fontSize: 24,
-              fontFamily: font,
-              letterSpacing: "0.05em",
+              display: "flex", alignItems: "center", gap: 10,
+              background: "#E31837", color: "#FFFFFF",
+              padding: "12px 24px", borderRadius: 14,
+              fontSize: 24, fontFamily: font, letterSpacing: "0.05em",
               width: "fit-content",
             }}>
               <div style={{ width: 10, height: 10, borderRadius: "50%", background: "white", opacity: 0.9 }} />
@@ -113,32 +85,18 @@ export default async function OGImage() {
         </div>
 
         {/* Right column — trophy */}
-        <div style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          width: 340,
-          zIndex: 1,
-        }}>
-          {logoSrc ? (
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 340, zIndex: 1 }}>
+          {hasLogo ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={logoSrc}
+              src={`${baseUrl}/logo.png`}
               width={300}
               height={520}
-              style={{ objectFit: "contain", filter: "drop-shadow(0 0 40px rgba(240,192,64,0.4))" }}
-              alt="trofeo"
+              style={{ objectFit: "contain", filter: "drop-shadow(0 0 40px rgba(240,192,64,0.35))" }}
+              alt=""
             />
           ) : (
-            <div style={{
-              fontSize: 160,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              opacity: 0.15,
-            }}>
-              🏆
-            </div>
+            <div style={{ fontSize: 140, opacity: 0.15, display: "flex" }}>🏆</div>
           )}
         </div>
       </div>
