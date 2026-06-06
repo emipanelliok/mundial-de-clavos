@@ -31,18 +31,13 @@ export default async function FixturePage() {
 
   return (
     <main className="min-h-screen flex flex-col">
-      <div className="bg-ink px-4 py-4">
+      <div className="bg-ink px-4 py-4 border-b border-border">
         <div className="max-w-lg mx-auto">
-          <Link
-            href="/"
-            className="flex items-center gap-1 text-white/50 text-sm hover:text-white transition-colors mb-4"
-          >
+          <Link href="/" className="flex items-center gap-1 text-muted text-sm hover:text-cream transition-colors mb-4">
             <ChevronLeft size={16} />
             Inicio
           </Link>
-          <h1 className="font-display text-4xl text-white leading-none mb-4">
-            EL FIXTURE
-          </h1>
+          <h1 className="font-display text-4xl text-cream leading-none mb-4">EL FIXTURE</h1>
           <PhaseBar phase={phase} />
         </div>
       </div>
@@ -53,12 +48,10 @@ export default async function FixturePage() {
         </div>
       </div>
 
-      <footer className="px-4 py-6 text-center">
+      <footer className="px-4 py-6 text-center border-t border-border">
         <p className="text-xs text-muted">
           Mundial de Clavos 2026 · por{" "}
-          <a href="https://x.com/emipanelli" target="_blank" rel="noopener noreferrer" className="text-rust underline">
-            @emipanelli
-          </a>
+          <a href="https://x.com/emipanelli" target="_blank" rel="noopener noreferrer" className="text-rust">@emipanelli</a>
         </p>
       </footer>
     </main>

@@ -1,15 +1,18 @@
 @import "tailwindcss";
 
 @theme {
-  --color-paper: #F5F0E8;
-  --color-ink: #1A1512;
-  --color-rust: #C8521A;
-  --color-rust-dark: #A03F10;
-  --color-gold: #C8963E;
-  --color-crimson: #C92A2A;
-  --color-muted: #8B7355;
-  --color-surface: #EDE8DE;
-  --color-border: #D4C9B5;
+  /* Copa 2026 — dark navy + electric green + red */
+  --color-paper: #0D1B2A;        /* main background */
+  --color-ink: #060F1A;          /* deepest dark (hero sections) */
+  --color-surface: #152538;      /* cards, inputs */
+  --color-surface-hi: #1C3350;   /* hover, elevated */
+  --color-border: #1E3A5A;       /* borders */
+  --color-cream: #F0F4F8;        /* primary text */
+  --color-muted: #7A9AB5;        /* secondary text */
+  --color-rust: #00D084;         /* primary action — electric green */
+  --color-rust-dark: #00A86B;    /* green hover */
+  --color-gold: #F0C040;         /* gold / trophy */
+  --color-crimson: #E63946;      /* danger / red accent */
 
   --font-display: var(--font-bebas), Impact, "Arial Narrow", sans-serif;
   --font-body: var(--font-inter), system-ui, sans-serif;
@@ -18,7 +21,7 @@
 @layer base {
   body {
     background-color: var(--color-paper);
-    color: var(--color-ink);
+    color: var(--color-cream);
     font-family: var(--font-body);
   }
 
