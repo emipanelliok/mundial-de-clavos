@@ -103,6 +103,13 @@ export default function NominationForm() {
           </label>
           <span className="text-xs text-muted">Hasta 5 autos</span>
         </div>
+
+        <div className="bg-surface border border-border rounded-xl px-3 py-2.5 text-xs text-muted leading-relaxed">
+          Hay una lista de autos cargados — buscá por marca o modelo. Si el tuyo no está,
+          podés agregarlo vos, pero <span className="text-ink font-medium">escribí marca y modelo completos</span>
+          {" "}(ej: <span className="text-ink">Rover 75</span>, no solo &quot;Rover&quot;).
+        </div>
+
         <div className="space-y-2">
           {cars.map((car, i) => (
             <CarSearch key={i} index={i} value={car}

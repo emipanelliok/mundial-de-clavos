@@ -55,7 +55,7 @@ export default function CarSearch({ index, value, onChange, onRemove, existingCa
           value={query}
           onChange={(e) => handleInput(e.target.value)}
           onFocus={() => { setSuggestions(searchCars(query).filter((c) => !existingCars.includes(c))); setOpen(true); }}
-          placeholder="Buscar o escribir auto..."
+          placeholder="Ej: Chrysler Neon, Fiat Marea..."
           className="flex-1 bg-transparent text-ink placeholder:text-muted text-sm outline-none min-w-0"
           autoComplete="off" autoCorrect="off" spellCheck={false}
         />
@@ -91,7 +91,7 @@ export default function CarSearch({ index, value, onChange, onRemove, existingCa
                   onClick={() => { onChange(query.trim()); setOpen(false); }}
                   className="w-full text-left px-4 py-3 text-sm text-rust font-medium hover:bg-rust/5 border-t border-border/50"
                 >
-                  ✚ Agregar &quot;{query.trim()}&quot; — no está en la lista pero se puede
+                  ✚ Agregar &quot;{query.trim()}&quot; — asegurate de poner marca y modelo
                 </button>
               )}
             </>
@@ -101,7 +101,7 @@ export default function CarSearch({ index, value, onChange, onRemove, existingCa
               onClick={() => { onChange(query.trim()); setOpen(false); }}
               className="w-full text-left px-4 py-3 text-sm text-rust font-medium hover:bg-rust/5"
             >
-              ✚ Agregar &quot;{query.trim()}&quot; — no está en la lista pero se puede
+              ✚ Agregar &quot;{query.trim()}&quot; — asegurate de poner marca y modelo
             </button>
           ) : (
             <p className="px-4 py-3 text-sm text-muted">Escribí para buscar...</p>
