@@ -10,9 +10,9 @@ export default async function NominacionesPage() {
     return (
       <main className="min-h-screen flex flex-col items-center justify-center px-4 py-12">
         <div className="max-w-sm w-full text-center space-y-4">
-          <h1 className="font-display text-4xl text-ink">NOMINACIONES CERRADAS</h1>
+          <h1 className="font-display text-4xl text-ink">CLASIFICACIÓN CERRADA</h1>
           <p className="text-muted text-sm">
-            Ya no se aceptan nuevas nominaciones. El mundial está en marcha.
+            Ya no se aceptan nuevos clasificados. El mundial está en marcha.
           </p>
           <Link
             href="/fixture"
@@ -38,9 +38,9 @@ export default async function NominacionesPage() {
             Inicio
           </Link>
           <h1 className="font-display text-4xl text-white leading-none">
-            ELEGÍ TUS
+            CLASIFICÁ TUS
             <br />
-            <span className="text-rust">NOMINADOS</span>
+            <span className="text-rust">CLAVOS</span>
           </h1>
           <p className="text-white/50 text-xs mt-2">
             Los {stats.maxQualifiers} más votados clasifican al Mundial.

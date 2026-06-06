@@ -14,8 +14,8 @@ export async function submitNomination(
   const handle = twitterHandle.replace(/^@/, "").trim().toLowerCase();
 
   if (!handle) return { success: false, error: "Ingresá tu usuario de Twitter." };
-  if (cars.length === 0) return { success: false, error: "Nominá al menos 1 auto." };
-  if (cars.length > 5) return { success: false, error: "Podés nominar hasta 5 autos." };
+  if (cars.length === 0) return { success: false, error: "Clasificá al menos 1 auto." };
+  if (cars.length > 5) return { success: false, error: "Podés clasificar hasta 5 autos." };
 
   const uniqueCars = [...new Set(cars.map((c) => c.trim()).filter(Boolean))];
   if (uniqueCars.length !== cars.length)
@@ -51,7 +51,7 @@ export async function submitNomination(
 
     return {
       success: true,
-      message: `¡Listo @${handle}! Tus ${uniqueCars.length} nominado${uniqueCars.length > 1 ? "s" : ""} están registrados.`,
+      message: `¡Listo @${handle}! Tus ${uniqueCars.length} clavo${uniqueCars.length > 1 ? "s" : ""} están clasificados al Mundial.`,
     };
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : "";

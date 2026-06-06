@@ -67,11 +67,11 @@ export default function NominationForm() {
           <CheckCircle className="text-rust" size={40} />
         </div>
         <div>
-          <h2 className="font-display text-3xl text-ink mb-2">¡NOMINACIÓN REGISTRADA!</h2>
+          <h2 className="font-display text-3xl text-ink mb-2">¡CLASIFICADO AL MUNDIAL!</h2>
           <p className="text-muted text-sm">{result.message}</p>
         </div>
         <div className="w-full bg-surface rounded-2xl p-4 space-y-2">
-          <p className="text-xs text-muted font-medium uppercase tracking-wider mb-3">Tus nominados</p>
+          <p className="text-xs text-muted font-medium uppercase tracking-wider mb-3">Tus clasificados</p>
           {confirmedCars.map((car, i) => (
             <div key={i} className="flex items-center gap-3 bg-white rounded-xl px-4 py-3">
               <span className="font-display text-xl text-rust">{i + 1}</span>
@@ -139,9 +139,9 @@ export default function NominationForm() {
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <label className="text-xs font-medium text-muted uppercase tracking-wider">
-            Tus nominados ({confirmedCars.length}/5)
+            Tus clasificados ({confirmedCars.length}/5)
           </label>
-          <span className="text-xs text-muted">Podés nominar hasta 5</span>
+          <span className="text-xs text-muted">Hasta 5 autos</span>
         </div>
         <div className="space-y-2">
           {cars.map((car, i) => (
@@ -182,12 +182,12 @@ export default function NominationForm() {
         {loading ? (
           <span className="inline-block w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
         ) : (
-          <><Send size={18} />NOMINAR</>
+          <><Send size={18} />CLASIFICAR AL MUNDIAL</>
         )}
       </button>
 
       <p className="text-center text-xs text-muted">
-        Un voto por usuario. No se puede votar dos veces.
+        Un voto por persona. No se puede clasificar dos veces.
       </p>
     </form>
   );
