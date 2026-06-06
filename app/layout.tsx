@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Bebas_Neue, Inter } from "next/font/google";
+import { GoogleAnalytics } from "@next/third-parties/google";
 import "./globals.css";
 
 const bebasNeue = Bebas_Neue({
@@ -33,6 +34,7 @@ export default function RootLayout({
   return (
     <html lang="es" className={`${bebasNeue.variable} ${inter.variable} h-full`}>
       <body className="min-h-full flex flex-col antialiased">{children}</body>
+      <GoogleAnalytics gaId="G-SD895EQ7MB" />
     </html>
   );
 }
