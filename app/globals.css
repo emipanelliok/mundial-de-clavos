@@ -12,7 +12,7 @@
   --color-rust: #003DA5;         /* azul principal — botones, accents */
   --color-rust-dark: #002B85;    /* azul hover */
   --color-gold: #F0A020;         /* dorado trofeo */
-  --color-crimson: #E31837;      /* rojo FIFA */
+  --color-crimson: #7ED957;      /* verde lima */
 
   --font-display: var(--font-bebas), Impact, "Arial Narrow", sans-serif;
   --font-body: var(--font-inter), system-ui, sans-serif;
