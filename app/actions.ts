@@ -125,7 +125,7 @@ export async function getRandomContenders(limit = 6) {
       `,
       sql`SELECT count(distinct car_name)::int AS n FROM nomination_cars`,
     ]);
-    return { cars: (result ?? []).map((r: { car_name: string }) => r.car_name), total: countRow?.n ?? 0 };
+    return { cars: (result ?? []).map((r) => (r as { car_name: string }).car_name), total: countRow?.n ?? 0 };
   } catch {
     return { cars: [] as string[], total: 0 };
   }
