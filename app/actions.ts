@@ -115,13 +115,13 @@ export async function getTopNominations(limit = 20) {
 
 export async function getTournamentStats() {
   if (!IS_CONFIGURED || !sql) {
-    return { totalVoters: 0, totalNominations: 0, phase: "eliminatorias", maxQualifiers: 32, nominationsOpen: true };
+    return { totalVoters: 0, totalNominations: 0, phase: "eliminatorias", maxQualifiers: 32, nominationsOpen: true, phaseEndsAt: null };
   }
   try {
     const [[voters], [nominations], [config]] = await Promise.all([
       sql`SELECT count(*)::int AS n FROM nominations`,
       sql`SELECT count(*)::int AS n FROM nomination_cars`,
-      sql`SELECT phase, max_qualifiers, nominations_open FROM tournament_config WHERE id = 1`,
+      sql`SELECT phase, max_qualifiers, nominations_open, phase_ends_at FROM tournament_config WHERE id = 1`,
     ]);
     return {
       totalVoters: voters?.n ?? 0,
@@ -129,8 +129,9 @@ export async function getTournamentStats() {
       phase: config?.phase ?? "eliminatorias",
       maxQualifiers: config?.max_qualifiers ?? 32,
       nominationsOpen: config?.nominations_open ?? true,
+      phaseEndsAt: config?.phase_ends_at ?? null,
     };
   } catch {
-    return { totalVoters: 0, totalNominations: 0, phase: "eliminatorias", maxQualifiers: 32, nominationsOpen: true };
+    return { totalVoters: 0, totalNominations: 0, phase: "eliminatorias", maxQualifiers: 32, nominationsOpen: true, phaseEndsAt: null };
   }
 }

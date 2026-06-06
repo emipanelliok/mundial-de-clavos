@@ -8,10 +8,12 @@ export async function updateTournamentConfig({
   phase,
   maxQualifiers,
   nominationsOpen,
+  phaseEndsAt,
 }: {
   phase: TournamentPhase;
   maxQualifiers: number;
   nominationsOpen: boolean;
+  phaseEndsAt: string | null;
 }) {
   if (!sql) throw new Error("Base de datos no configurada.");
 
@@ -19,7 +21,8 @@ export async function updateTournamentConfig({
     UPDATE tournament_config
     SET phase = ${phase},
         max_qualifiers = ${maxQualifiers},
-        nominations_open = ${nominationsOpen}
+        nominations_open = ${nominationsOpen},
+        phase_ends_at = ${phaseEndsAt}
     WHERE id = 1
   `;
 

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getTournamentStats, getTopNominations } from "./actions";
 import PhaseBar from "@/components/PhaseBar";
 import { Trophy, Users, Car, ChevronRight, Lock } from "lucide-react";
+import CountdownTimer from "@/components/CountdownTimer";
 import type { TournamentPhase } from "@/lib/db";
 
 export const revalidate = 30;
@@ -25,6 +26,7 @@ export default async function HomePage() {
   const phase = stats.phase as TournamentPhase;
   const isEliminatorias = phase === "eliminatorias";
   const phaseInfo = PHASE_INFO[phase] ?? PHASE_INFO.eliminatorias;
+  const phaseEndsAt = stats.phaseEndsAt;
 
   return (
     <main className="min-h-screen flex flex-col">
@@ -43,6 +45,7 @@ export default async function HomePage() {
             <p className="text-xs font-semibold opacity-70 uppercase tracking-widest mb-0.5">ESTAMOS EN</p>
             <p className="font-display text-3xl leading-none">{phaseInfo.label}</p>
             <p className="text-sm opacity-80 mt-1">{phaseInfo.desc}</p>
+            {phaseEndsAt && <CountdownTimer endsAt={phaseEndsAt} label="Cierra en" />}
           </div>
 
           {/* Timeline secundario */}

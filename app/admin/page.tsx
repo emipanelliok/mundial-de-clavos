@@ -7,7 +7,7 @@ export const revalidate = 0;
 
 async function getAdminData() {
   const empty = {
-    config: { phase: "eliminatorias" as TournamentPhase, max_qualifiers: 32, nominations_open: true },
+    config: { phase: "eliminatorias" as TournamentPhase, max_qualifiers: 32, nominations_open: true, phase_ends_at: null as string | null },
     topCars: [] as { car_name: string; total_nominations: number }[],
     recentNominations: [] as { twitter_handle: string; created_at: string; cars: string[] }[],
     totalVoters: 0,
@@ -18,7 +18,7 @@ async function getAdminData() {
 
   try {
     const [[config], topCars, [voters], [cars], recent] = await Promise.all([
-      sql`SELECT phase, max_qualifiers, nominations_open FROM tournament_config WHERE id = 1`,
+      sql`SELECT phase, max_qualifiers, nominations_open, phase_ends_at FROM tournament_config WHERE id = 1`,
       sql`
         SELECT car_name, count(*)::int AS total_nominations
         FROM nomination_cars
@@ -97,7 +97,7 @@ export default async function AdminPage() {
 
         {/* Controls */}
         <AdminControls
-          config={{ phase: config.phase as TournamentPhase, maxQualifiers: config.max_qualifiers, nominationsOpen: config.nominations_open }}
+          config={{ phase: config.phase as TournamentPhase, maxQualifiers: config.max_qualifiers, nominationsOpen: config.nominations_open, phaseEndsAt: config.phase_ends_at }}
         />
 
         {/* Ranking completo */}

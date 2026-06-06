@@ -7,6 +7,13 @@ export const IS_CONFIGURED = connectionString.length > 0;
 
 export const sql = IS_CONFIGURED ? neon(connectionString) : null;
 
+export interface TournamentConfig {
+  phase: string;
+  max_qualifiers: number;
+  nominations_open: boolean;
+  phase_ends_at: string | null;
+}
+
 export type TournamentPhase =
   | "eliminatorias"
   | "grupos"
