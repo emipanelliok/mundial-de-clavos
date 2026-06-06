@@ -29,7 +29,7 @@ export default async function FixturePage() {
   return (
     <main className="min-h-screen flex flex-col">
       <div className="bg-ink px-4 py-4">
-        <div className="max-w-lg mx-auto">
+        <div className="max-w-5xl mx-auto">
           <Link href="/" className="flex items-center gap-1 text-cream/50 text-sm hover:text-cream transition-colors mb-4">
             <ChevronLeft size={16} />Inicio
           </Link>
@@ -38,7 +38,7 @@ export default async function FixturePage() {
         </div>
       </div>
       <div className="flex-1 px-4 py-6">
-        <div className="max-w-lg mx-auto">
+        <div className="max-w-5xl mx-auto">
           <FixtureView phase={phase} tournamentCars={cars} maxQualifiers={maxQualifiers} />
         </div>
       </div>

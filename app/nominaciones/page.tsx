@@ -34,7 +34,7 @@ export default async function NominacionesPage() {
       </div>
 
       <div className="flex-1 px-4 py-6">
-        <div className="max-w-lg mx-auto">
+        <div className="max-w-xl mx-auto">
           <NominationForm />
         </div>
       </div>

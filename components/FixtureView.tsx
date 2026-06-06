@@ -46,7 +46,7 @@ export default function FixtureView({ phase, tournamentCars, maxQualifiers }: {
           <p className="text-xs text-muted mt-1">Los {maxQualifiers} autos más votados clasifican al mundial.</p>
         </div>
       )}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {groups.map((group) => <GroupCard key={group.letter} group={group} phase={phase} />)}
       </div>
     </div>
