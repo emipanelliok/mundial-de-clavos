@@ -48,7 +48,7 @@ export default async function HomePage() {
           </p>
 
           {/* Fase actual — única aparición del rojo */}
-          <div className="bg-crimson rounded-2xl px-4 py-3 mb-4 max-w-xl">
+          <div className="bg-crimson text-white rounded-2xl px-4 py-3 mb-4 max-w-xl">
             <div className="flex items-center gap-2 mb-0.5">
               <span className="w-2 h-2 rounded-full bg-current opacity-70 animate-pulse shrink-0" />
               <p className="text-xs font-semibold opacity-70 uppercase tracking-widest">ESTAMOS EN</p>
