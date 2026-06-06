@@ -37,11 +37,12 @@ export default async function HomePage() {
         <div className="max-w-5xl mx-auto">
           <p className="text-cream/40 font-display text-sm tracking-[0.3em] mb-1">ARGENTINA · 2026</p>
 
-          <h1 className="font-display text-6xl sm:text-7xl md:text-8xl leading-none mb-4">
-            <span className="text-white">MUNDIAL</span>
-            <br />
-            <span className="text-white">DE CLAVOS</span>
-          </h1>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/hero-logo.png"
+            alt="Mundial de Clavos 2026"
+            className="h-28 sm:h-36 md:h-44 w-auto mb-4 object-contain"
+          />
 
           <p className="text-cream/50 text-sm mb-6 max-w-xl leading-relaxed">
             El torneo definitivo del auto más clavo de la historia.
