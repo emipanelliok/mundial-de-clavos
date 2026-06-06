@@ -8,7 +8,7 @@ async function getAdminData() {
   const empty = {
     config: { phase: "eliminatorias" as TournamentPhase, max_qualifiers: 32, nominations_open: true, phase_ends_at: null as string | null },
     topCars: [] as { car_name: string; total_nominations: number }[],
-    recentNominations: [] as { twitter_handle: string; created_at: string; cars: string[] }[],
+    recentNominations: [] as { twitter_handle: string; email: string | null; created_at: string; cars: string[] }[],
     totalVoters: 0,
     totalCars: 0,
   };
@@ -28,11 +28,11 @@ async function getAdminData() {
       sql`SELECT count(*)::int AS n FROM nominations`,
       sql`SELECT count(*)::int AS n FROM nomination_cars`,
       sql`
-        SELECT n.twitter_handle, n.created_at,
+        SELECT n.twitter_handle, n.email, n.created_at,
                array_agg(nc.car_name ORDER BY nc.created_at) AS cars
         FROM nominations n
         JOIN nomination_cars nc ON nc.nomination_id = n.id
-        GROUP BY n.id, n.twitter_handle, n.created_at
+        GROUP BY n.id, n.twitter_handle, n.email, n.created_at
         ORDER BY n.created_at DESC
         LIMIT 100
       `,
@@ -41,7 +41,7 @@ async function getAdminData() {
     return {
       config: config ?? empty.config,
       topCars: (topCars ?? []) as { car_name: string; total_nominations: number }[],
-      recentNominations: (recent ?? []) as { twitter_handle: string; created_at: string; cars: string[] }[],
+      recentNominations: (recent ?? []) as { twitter_handle: string; email: string | null; created_at: string; cars: string[] }[],
       totalVoters: voters?.n ?? 0,
       totalCars: cars?.n ?? 0,
     };

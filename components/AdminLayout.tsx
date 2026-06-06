@@ -18,7 +18,7 @@ type Tab = (typeof TABS)[number]["id"];
 interface AdminLayoutProps {
   config: { phase: TournamentPhase; maxQualifiers: number; nominationsOpen: boolean; phaseEndsAt: string | null };
   topCars: { car_name: string; total_nominations: number }[];
-  recentNominations: { twitter_handle: string; created_at: string; cars: string[] }[];
+  recentNominations: { twitter_handle: string; email: string | null; created_at: string; cars: string[] }[];
   totalVoters: number;
   totalCars: number;
 }
@@ -150,16 +150,32 @@ function AutosTab({ topCars, maxQualifiers }: { topCars: { car_name: string; tot
 
 // ─── Votantes ─────────────────────────────────────────────────────────────────
 function VotantesTab({ nominations, totalVoters, onDelete }: {
-  nominations: { twitter_handle: string; created_at: string; cars: string[] }[];
+  nominations: { twitter_handle: string; email: string | null; created_at: string; cars: string[] }[];
   totalVoters: number;
   onDelete: (handle: string) => void;
 }) {
+  const emails = nominations.map((n) => n.email).filter(Boolean) as string[];
+
+  const copyEmails = () => {
+    navigator.clipboard.writeText(emails.join(", "));
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-baseline justify-between">
         <h2 className="font-display text-3xl text-ink">VOTANTES</h2>
         <span className="text-xs text-muted">{totalVoters} en total · últimos 100</span>
       </div>
+
+      {emails.length > 0 && (
+        <button
+          onClick={copyEmails}
+          className="w-full flex items-center justify-center gap-2 bg-ink text-white rounded-xl px-4 py-2.5 text-sm font-medium hover:bg-ink/90 transition-colors"
+        >
+          Copiar {emails.length} email{emails.length > 1 ? "s" : ""} (separados por coma)
+        </button>
+      )}
+
       <div className="space-y-2">
         {nominations.length === 0 && <p className="text-muted text-sm text-center py-10">Sin votos aún.</p>}
         {nominations.map((nom) => (
@@ -171,7 +187,7 @@ function VotantesTab({ nominations, totalVoters, onDelete }: {
 }
 
 function NomCard({ nom, onDelete }: {
-  nom: { twitter_handle: string; created_at: string; cars: string[] };
+  nom: { twitter_handle: string; email: string | null; created_at: string; cars: string[] };
   onDelete: (handle: string) => void;
 }) {
   const [pending, startTransition] = useTransition();
@@ -203,6 +219,9 @@ function NomCard({ nom, onDelete }: {
           </button>
         </div>
       </div>
+      {nom.email && (
+        <p className="text-xs text-muted mb-2 truncate">✉ {nom.email}</p>
+      )}
       <div className="flex flex-wrap gap-1.5">
         {nom.cars.map((car) => (
           <span key={car} className="bg-surface border border-border text-ink text-xs px-2 py-1 rounded-lg">{car}</span>

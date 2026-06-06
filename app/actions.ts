@@ -9,7 +9,8 @@ export type NominationResult =
 
 export async function submitNomination(
   twitterHandle: string,
-  cars: string[]
+  cars: string[],
+  email?: string
 ): Promise<NominationResult> {
   const handle = twitterHandle.replace(/^@/, "").trim().toLowerCase();
 
@@ -20,6 +21,11 @@ export async function submitNomination(
   const uniqueCars = [...new Set(cars.map((c) => c.trim()).filter(Boolean))];
   if (uniqueCars.length !== cars.length)
     return { success: false, error: "No podés nominar el mismo auto dos veces." };
+
+  // Email opcional — solo validamos formato si lo cargaron
+  const cleanEmail = email?.trim().toLowerCase() || null;
+  if (cleanEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail))
+    return { success: false, error: "El email no parece válido. Dejalo vacío o corregilo." };
 
   if (!IS_CONFIGURED || !sql)
     return { success: false, error: "Base de datos no configurada." };
@@ -39,8 +45,8 @@ export async function submitNomination(
       return { success: false, error: `@${handle} ya nominó. Solo se puede votar una vez.` };
 
     const [nomination] = await sql`
-      INSERT INTO nominations (twitter_handle, ip_address)
-      VALUES (${handle}, ${ip})
+      INSERT INTO nominations (twitter_handle, ip_address, email)
+      VALUES (${handle}, ${ip}, ${cleanEmail})
       RETURNING id
     `;
 

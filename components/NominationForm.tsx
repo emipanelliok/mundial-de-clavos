@@ -10,6 +10,7 @@ type HandleStatus = "idle" | "checking" | "valid" | "invalid" | "unknown";
 export default function NominationForm() {
   const [handle, setHandle] = useState("");
   const [handleStatus, setHandleStatus] = useState<HandleStatus>("idle");
+  const [email, setEmail] = useState("");
   const [cars, setCars] = useState<string[]>(["", ""]);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<{ success: boolean; message?: string; error?: string } | null>(null);
@@ -36,7 +37,7 @@ export default function NominationForm() {
     e.preventDefault();
     if (handleStatus === "invalid" || confirmedCars.length === 0) return;
     setLoading(true); setResult(null);
-    setResult(await submitNomination(handle, confirmedCars));
+    setResult(await submitNomination(handle, confirmedCars, email));
     setLoading(false);
   };
 
@@ -127,6 +128,24 @@ export default function NominationForm() {
             <Plus size={16} />Agregar otro auto
           </button>
         )}
+      </div>
+
+      {/* Email opcional */}
+      <div className="space-y-2">
+        <label className="flex items-center gap-2 text-xs font-semibold text-muted uppercase tracking-wider">
+          Email <span className="text-muted/60 normal-case font-normal tracking-normal">— opcional</span>
+        </label>
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="tuemail@ejemplo.com"
+          className="w-full bg-white border-2 border-border rounded-xl px-4 py-3 text-ink text-sm outline-none placeholder:text-muted focus:border-rust/40 transition-colors"
+          autoCapitalize="none"
+          autoCorrect="off"
+          spellCheck={false}
+        />
+        <p className="text-xs text-muted px-1">Te avisamos cuando tus clavos avancen de ronda. No spam.</p>
       </div>
 
       {result?.error && (
