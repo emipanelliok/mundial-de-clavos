@@ -3,6 +3,7 @@ import { getTournamentStats, getTopNominations, getRandomContenders } from "./ac
 import PhaseBar from "@/components/PhaseBar";
 import { Trophy, Users, Car, ChevronRight, Lock } from "lucide-react";
 import HowItWorks from "@/components/HowItWorks";
+import CountdownTimer from "@/components/CountdownTimer";
 import type { TournamentPhase } from "@/lib/db";
 
 export const revalidate = 30;
@@ -55,11 +56,7 @@ export default async function HomePage() {
             </div>
             <p className="font-display text-3xl leading-none">{phaseInfo.label}</p>
             <p className="text-sm opacity-80 mt-1">{phaseInfo.desc}</p>
-            {phaseEndsAt && (
-              <div className="mt-2 text-xs opacity-60">
-                Cierra: {new Date(phaseEndsAt).toLocaleDateString("es-AR", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" })}
-              </div>
-            )}
+            {phaseEndsAt && <CountdownTimer endsAt={phaseEndsAt} label="Cierra en" />}
           </div>
 
           <PhaseBar phase={phase} />
