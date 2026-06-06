@@ -28,8 +28,8 @@ export default function CountdownTimer({ endsAt, label = "Cierra en" }: { endsAt
 
   return (
     <div className="mt-2">
-      <p className="text-xs font-semibold opacity-70 uppercase tracking-widest mb-1.5">{label}</p>
-      <div className="flex items-end gap-2">
+      <p className="text-xs font-semibold opacity-70 uppercase tracking-widest mb-1.5 text-center md:text-left">{label}</p>
+      <div className="flex items-end gap-2 justify-center md:justify-start">
         {left.d > 0 && (
           <div className="text-center">
             <span className="font-display text-3xl leading-none">{String(left.d).padStart(2, "0")}</span>
