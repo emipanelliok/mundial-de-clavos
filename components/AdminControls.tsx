@@ -52,7 +52,7 @@ export default function AdminControls({
     toLocalInput(config.phaseEndsAt) !== endsAt;
 
   return (
-    <div className="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-5">
+    <div className="bg-ink rounded-2xl p-5 space-y-5">
       <h2 className="font-display text-xl text-white tracking-wider flex items-center gap-2">
         <Settings size={16} className="text-white/40" />
         CONFIGURACIÓN

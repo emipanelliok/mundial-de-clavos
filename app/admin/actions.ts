@@ -31,3 +31,9 @@ export async function updateTournamentConfig({
   revalidatePath("/nominaciones");
   revalidatePath("/admin");
 }
+
+export async function deleteNomination(twitterHandle: string) {
+  if (!sql) throw new Error("Base de datos no configurada.");
+  await sql`DELETE FROM nominations WHERE twitter_handle = ${twitterHandle.toLowerCase()}`;
+  revalidatePath("/admin");
+}

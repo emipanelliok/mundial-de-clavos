@@ -91,7 +91,7 @@ export default function CarSearch({ index, value, onChange, onRemove, existingCa
                   onClick={() => { onChange(query.trim()); setOpen(false); }}
                   className="w-full text-left px-4 py-3 text-sm text-rust font-medium hover:bg-rust/5 border-t border-border/50"
                 >
-                  + Agregar &quot;{query.trim()}&quot; como nuevo
+                  ✚ Agregar &quot;{query.trim()}&quot; — no está en la lista pero se puede
                 </button>
               )}
             </>
@@ -101,7 +101,7 @@ export default function CarSearch({ index, value, onChange, onRemove, existingCa
               onClick={() => { onChange(query.trim()); setOpen(false); }}
               className="w-full text-left px-4 py-3 text-sm text-rust font-medium hover:bg-rust/5"
             >
-              + Agregar &quot;{query.trim()}&quot; como nuevo
+              ✚ Agregar &quot;{query.trim()}&quot; — no está en la lista pero se puede
             </button>
           ) : (
             <p className="px-4 py-3 text-sm text-muted">Escribí para buscar...</p>
