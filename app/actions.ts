@@ -61,6 +61,43 @@ export async function submitNomination(
   }
 }
 
+// Returns: "valid" | "invalid" | "unknown"
+// "valid" = format ok + network confirmed exists
+// "invalid" = bad format OR definitive 404 from X
+// "unknown" = format ok but network blocked/timeout (allow through)
+export async function checkTwitterHandle(
+  handle: string
+): Promise<"valid" | "invalid" | "unknown"> {
+  const clean = handle.replace(/^@/, "").trim().toLowerCase();
+
+  // Format check: 1–15 chars, alphanumeric + underscore only
+  if (!clean || !/^[a-z0-9_]{1,15}$/.test(clean)) return "invalid";
+
+  try {
+    // Use the public intent URL — more reliable for server-side checks
+    const res = await fetch(
+      `https://twitter.com/intent/user?screen_name=${clean}`,
+      {
+        method: "GET",
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+          Accept: "text/html",
+        },
+        signal: AbortSignal.timeout(5000),
+        redirect: "follow",
+      }
+    );
+
+    if (res.status === 404) return "invalid";
+    if (res.ok) return "valid";
+    // 403, 429, etc. = blocked, don't punish the user
+    return "unknown";
+  } catch {
+    return "unknown";
+  }
+}
+
 export async function getTopNominations(limit = 20) {
   if (!IS_CONFIGURED || !sql) return [];
   try {
