@@ -128,7 +128,7 @@ export default async function HomePage() {
           </div>
 
           {/* Right: Contenders / Ranking */}
-          {isEliminatorias && contenders.total >= 10 && contenders.cars.length > 0 ? (
+          {isEliminatorias && contenders.cars.length > 0 ? (
             <div className="bg-white border-2 border-border rounded-2xl overflow-hidden">
               <div className="px-4 pt-4 pb-3 border-b border-border">
                 <p className="font-display text-xl text-ink tracking-wide">ALGUNOS QUE ESTÁN EN LA CARRERA</p>
