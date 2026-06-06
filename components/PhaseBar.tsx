@@ -11,7 +11,6 @@ const PHASES: { key: TournamentPhase; label: string; short: string }[] = [
 
 export default function PhaseBar({ phase }: { phase: TournamentPhase }) {
   const currentIndex = PHASES.findIndex((p) => p.key === phase);
-
   return (
     <div className="flex items-center gap-1 overflow-x-auto pb-1 no-scrollbar">
       {PHASES.map((p, i) => {
@@ -20,14 +19,14 @@ export default function PhaseBar({ phase }: { phase: TournamentPhase }) {
         return (
           <div key={p.key} className="flex items-center gap-1 shrink-0">
             <div className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-              isCurrent ? "bg-rust text-ink" :
-              isPast ? "bg-border/50 text-muted/50 line-through" :
-              "bg-surface text-muted/40 border border-border/50"
+              isCurrent ? "bg-crimson text-white" :
+              isPast ? "bg-cream/20 text-cream/30 line-through" :
+              "bg-cream/10 text-cream/30 border border-cream/10"
             }`}>
               <span className="hidden sm:inline">{p.label}</span>
               <span className="sm:hidden">{p.short}</span>
             </div>
-            {i < PHASES.length - 1 && <span className="text-border text-xs">›</span>}
+            {i < PHASES.length - 1 && <span className="text-cream/20 text-xs">›</span>}
           </div>
         );
       })}

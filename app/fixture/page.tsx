@@ -8,9 +8,7 @@ import type { TournamentPhase, TournamentCar } from "@/lib/db";
 export const revalidate = 60;
 
 async function getFixtureData() {
-  if (!IS_CONFIGURED || !sql) {
-    return { phase: "eliminatorias" as TournamentPhase, maxQualifiers: 32, cars: [] as TournamentCar[] };
-  }
+  if (!IS_CONFIGURED || !sql) return { phase: "eliminatorias" as TournamentPhase, maxQualifiers: 32, cars: [] as TournamentCar[] };
   try {
     const [[config], cars] = await Promise.all([
       sql`SELECT phase, max_qualifiers FROM tournament_config WHERE id = 1`,
@@ -28,30 +26,26 @@ async function getFixtureData() {
 
 export default async function FixturePage() {
   const { phase, maxQualifiers, cars } = await getFixtureData();
-
   return (
     <main className="min-h-screen flex flex-col">
-      <div className="bg-ink px-4 py-4 border-b border-border">
+      <div className="bg-ink px-4 py-4">
         <div className="max-w-lg mx-auto">
-          <Link href="/" className="flex items-center gap-1 text-muted text-sm hover:text-cream transition-colors mb-4">
-            <ChevronLeft size={16} />
-            Inicio
+          <Link href="/" className="flex items-center gap-1 text-cream/50 text-sm hover:text-cream transition-colors mb-4">
+            <ChevronLeft size={16} />Inicio
           </Link>
           <h1 className="font-display text-4xl text-cream leading-none mb-4">EL FIXTURE</h1>
           <PhaseBar phase={phase} />
         </div>
       </div>
-
       <div className="flex-1 px-4 py-6">
         <div className="max-w-lg mx-auto">
           <FixtureView phase={phase} tournamentCars={cars} maxQualifiers={maxQualifiers} />
         </div>
       </div>
-
       <footer className="px-4 py-6 text-center border-t border-border">
         <p className="text-xs text-muted">
           Mundial de Clavos 2026 · por{" "}
-          <a href="https://x.com/emipanelli" target="_blank" rel="noopener noreferrer" className="text-rust">@emipanelli</a>
+          <a href="https://x.com/emipanelli" target="_blank" rel="noopener noreferrer" className="text-rust font-medium">@emipanelli</a>
         </p>
       </footer>
     </main>

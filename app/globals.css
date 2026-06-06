@@ -1,18 +1,18 @@
 @import "tailwindcss";
 
 @theme {
-  /* Copa 2026 — dark navy + electric green + red */
-  --color-paper: #0D1B2A;        /* main background */
-  --color-ink: #060F1A;          /* deepest dark (hero sections) */
-  --color-surface: #152538;      /* cards, inputs */
-  --color-surface-hi: #1C3350;   /* hover, elevated */
-  --color-border: #1E3A5A;       /* borders */
-  --color-cream: #F0F4F8;        /* primary text */
-  --color-muted: #7A9AB5;        /* secondary text */
-  --color-rust: #00D084;         /* primary action — electric green */
-  --color-rust-dark: #00A86B;    /* green hover */
-  --color-gold: #F0C040;         /* gold / trophy */
-  --color-crimson: #E63946;      /* danger / red accent */
+  /* Copa FIFA 2026 — blanco + azul + rojo */
+  --color-paper: #FFFFFF;        /* fondo principal */
+  --color-ink: #001E62;          /* navy oscuro (heroes + texto principal) */
+  --color-surface: #EEF2F8;      /* cards, inputs */
+  --color-surface-hi: #E2EAF4;   /* hover */
+  --color-border: #C4D0E3;       /* bordes */
+  --color-cream: #F0F4FF;        /* texto claro sobre fondos oscuros */
+  --color-muted: #5A728C;        /* texto secundario */
+  --color-rust: #003DA5;         /* azul principal — botones, accents */
+  --color-rust-dark: #002B85;    /* azul hover */
+  --color-gold: #F0A020;         /* dorado trofeo */
+  --color-crimson: #E31837;      /* rojo FIFA */
 
   --font-display: var(--font-bebas), Impact, "Arial Narrow", sans-serif;
   --font-body: var(--font-inter), system-ui, sans-serif;
@@ -21,7 +21,7 @@
 @layer base {
   body {
     background-color: var(--color-paper);
-    color: var(--color-cream);
+    color: var(--color-ink);
     font-family: var(--font-body);
   }
 
