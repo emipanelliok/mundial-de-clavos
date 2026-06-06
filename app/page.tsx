@@ -41,7 +41,7 @@ export default async function HomePage() {
           <img
             src="/hero-logo.png"
             alt="Mundial de Clavos 2026"
-            className="h-36 sm:h-44 md:h-56 w-auto mb-4 object-contain"
+            className="h-32 sm:h-40 md:h-48 w-auto mb-4 object-contain"
           />
 
           <p className="text-cream/50 text-sm mb-6 max-w-xl leading-relaxed">
