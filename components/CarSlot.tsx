@@ -49,7 +49,7 @@ export default function CarSlot({ cars }: CarSlotProps) {
     <div className="h-14 sm:h-16 overflow-hidden flex items-center">
       <span
         style={{ transition: "opacity 0.35s ease, transform 0.35s ease", ...styles[phase] }}
-        className="font-display text-4xl sm:text-5xl text-crimson leading-none block"
+        className="font-display text-4xl sm:text-5xl text-white leading-none block"
       >
         {shuffled.current[index]}
       </span>
