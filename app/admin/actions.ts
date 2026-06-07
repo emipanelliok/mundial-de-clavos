@@ -37,3 +37,16 @@ export async function deleteNomination(twitterHandle: string) {
   await sql`DELETE FROM nominations WHERE twitter_handle = ${twitterHandle.toLowerCase()}`;
   revalidatePath("/admin");
 }
+
+// Renombra todas las apariciones de un auto. Sirve para corregir errores
+// y fusionar duplicados (ej: "Rover75" → "Rover 75").
+export async function renameCar(oldName: string, newName: string) {
+  if (!sql) throw new Error("Base de datos no configurada.");
+  const clean = newName.trim();
+  if (!clean) throw new Error("El nombre no puede estar vacío.");
+  await sql`
+    UPDATE nomination_cars SET car_name = ${clean} WHERE car_name = ${oldName}
+  `;
+  revalidatePath("/admin");
+  revalidatePath("/");
+}

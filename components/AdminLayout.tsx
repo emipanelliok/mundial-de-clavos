@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { LayoutDashboard, Car, Users, Trophy, Lock, Unlock, Trash2 } from "lucide-react";
+import { LayoutDashboard, Car, Users, Trophy, Lock, Unlock, Trash2, Pencil, Check, X } from "lucide-react";
 import AdminControls from "./AdminControls";
-import { deleteNomination } from "@/app/admin/actions";
+import { deleteNomination, renameCar } from "@/app/admin/actions";
 import type { TournamentPhase } from "@/lib/db";
 
 const TABS = [
@@ -118,32 +118,73 @@ function AutosTab({ topCars, maxQualifiers }: { topCars: { car_name: string; tot
         <h2 className="font-display text-3xl text-ink">AUTOS</h2>
         <span className="text-xs text-muted">{topCars.length} candidatos</span>
       </div>
+      <p className="text-xs text-muted">Tocá el lápiz para corregir el nombre de un auto. Si lo renombrás igual a otro existente, se fusionan los votos.</p>
       <div className="bg-white rounded-2xl border border-border overflow-hidden shadow-sm">
-        <div className="divide-y divide-border max-h-[calc(100vh-200px)] overflow-y-auto">
+        <div className="divide-y divide-border max-h-[calc(100vh-220px)] overflow-y-auto">
           {topCars.length === 0 && <p className="text-muted text-sm text-center py-10">Sin datos aún.</p>}
-          {topCars.map((car, i) => {
-            const isIn = i < maxQualifiers;
-            const pct = Math.round((car.total_nominations / maxVotes) * 100);
-            return (
-              <div key={car.car_name} className={`flex items-center gap-3 px-4 py-3 ${isIn ? "" : "opacity-40"}`}>
-                <span className={`font-display text-lg w-7 text-center shrink-0 ${i === 0 ? "text-gold" : i < 3 ? "text-muted" : "text-muted/40"}`}>
-                  {i + 1}
-                </span>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm text-ink truncate">{car.car_name}</span>
-                    <span className="text-xs text-muted shrink-0 ml-2">{car.total_nominations}</span>
-                  </div>
-                  <div className="h-1.5 bg-surface rounded-full overflow-hidden">
-                    <div className={`h-full rounded-full ${isIn ? "bg-rust" : "bg-border"}`} style={{ width: `${pct}%` }} />
-                  </div>
-                </div>
-                {i === maxQualifiers - 1 && <span className="text-[10px] text-crimson font-semibold shrink-0 ml-1">CORTE</span>}
-              </div>
-            );
-          })}
+          {topCars.map((car, i) => (
+            <CarRow key={car.car_name} car={car} rank={i} maxVotes={maxVotes} isIn={i < maxQualifiers} isCut={i === maxQualifiers - 1} />
+          ))}
         </div>
       </div>
+    </div>
+  );
+}
+
+function CarRow({ car, rank, maxVotes, isIn, isCut }: {
+  car: { car_name: string; total_nominations: number };
+  rank: number; maxVotes: number; isIn: boolean; isCut: boolean;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState(car.car_name);
+  const [pending, startTransition] = useTransition();
+  const pct = Math.round((car.total_nominations / maxVotes) * 100);
+
+  const save = () => {
+    const v = value.trim();
+    if (!v || v === car.car_name) { setEditing(false); setValue(car.car_name); return; }
+    startTransition(async () => { await renameCar(car.car_name, v); setEditing(false); });
+  };
+
+  if (editing) {
+    return (
+      <div className="flex items-center gap-2 px-4 py-3 bg-rust/5">
+        <span className="font-display text-lg w-7 text-center shrink-0 text-muted/40">{rank + 1}</span>
+        <input
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter") save(); if (e.key === "Escape") { setEditing(false); setValue(car.car_name); } }}
+          autoFocus
+          className="flex-1 bg-white border-2 border-rust/40 rounded-lg px-3 py-1.5 text-sm text-ink outline-none"
+        />
+        <button onClick={save} disabled={pending} className="text-rust hover:text-rust-dark p-1 disabled:opacity-40" title="Guardar">
+          <Check size={16} />
+        </button>
+        <button onClick={() => { setEditing(false); setValue(car.car_name); }} className="text-muted hover:text-crimson p-1" title="Cancelar">
+          <X size={16} />
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className={`flex items-center gap-3 px-4 py-3 group ${isIn ? "" : "opacity-40"}`}>
+      <span className={`font-display text-lg w-7 text-center shrink-0 ${rank === 0 ? "text-gold" : rank < 3 ? "text-muted" : "text-muted/40"}`}>
+        {rank + 1}
+      </span>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center justify-between mb-1">
+          <span className="text-sm text-ink truncate">{car.car_name}</span>
+          <span className="text-xs text-muted shrink-0 ml-2">{car.total_nominations}</span>
+        </div>
+        <div className="h-1.5 bg-surface rounded-full overflow-hidden">
+          <div className={`h-full rounded-full ${isIn ? "bg-rust" : "bg-border"}`} style={{ width: `${pct}%` }} />
+        </div>
+      </div>
+      <button onClick={() => setEditing(true)} className="text-muted/40 hover:text-rust p-1 shrink-0 transition-colors" title="Renombrar">
+        <Pencil size={14} />
+      </button>
+      {isCut && <span className="text-[10px] text-crimson font-semibold shrink-0">CORTE</span>}
     </div>
   );
 }
