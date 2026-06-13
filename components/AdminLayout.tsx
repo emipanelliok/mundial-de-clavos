@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { LayoutDashboard, Car, Users, Trophy, Lock, Unlock, Trash2, Pencil, Check, X } from "lucide-react";
+import { LayoutDashboard, Car, Users, Trophy, Lock, Unlock, Trash2, Pencil, Check, X, Shuffle, RotateCcw, AlertTriangle } from "lucide-react";
 import AdminControls from "./AdminControls";
-import { deleteNomination, renameCar } from "@/app/admin/actions";
+import { deleteNomination, renameCar, buildTournament, reopenClassification } from "@/app/admin/actions";
 import type { TournamentPhase } from "@/lib/db";
 
 const TABS = [
@@ -15,15 +15,18 @@ const TABS = [
 
 type Tab = (typeof TABS)[number]["id"];
 
+type GroupCar = { car_name: string; total_nominations: number; seed: number | null; group_letter: string | null; group_position: number | null };
+
 interface AdminLayoutProps {
   config: { phase: TournamentPhase; maxQualifiers: number; nominationsOpen: boolean; phaseEndsAt: string | null };
   topCars: { car_name: string; total_nominations: number }[];
   recentNominations: { twitter_handle: string; email: string | null; created_at: string; cars: string[] }[];
+  groupCars: GroupCar[];
   totalVoters: number;
   totalCars: number;
 }
 
-export default function AdminLayout({ config, topCars, recentNominations, totalVoters, totalCars }: AdminLayoutProps) {
+export default function AdminLayout({ config, topCars, recentNominations, groupCars, totalVoters, totalCars }: AdminLayoutProps) {
   const [tab, setTab] = useState<Tab>("dashboard");
   const [nominations, setNominations] = useState(recentNominations);
 
@@ -78,7 +81,7 @@ export default function AdminLayout({ config, topCars, recentNominations, totalV
           {tab === "dashboard" && <DashboardTab config={config} totalVoters={totalVoters} totalCars={totalCars} topCars={topCars} />}
           {tab === "autos"     && <AutosTab topCars={topCars} maxQualifiers={config.maxQualifiers} />}
           {tab === "votantes"  && <VotantesTab nominations={nominations} totalVoters={totalVoters} onDelete={handleDelete} />}
-          {tab === "fixture"   && <FixtureTab topCars={topCars} maxQualifiers={config.maxQualifiers} />}
+          {tab === "fixture"   && <FixtureTab topCars={topCars} maxQualifiers={config.maxQualifiers} phase={config.phase} groupCars={groupCars} />}
         </div>
       </main>
     </div>
@@ -276,51 +279,142 @@ function NomCard({ nom, onDelete }: {
   );
 }
 
-// ─── Fixture Preview ──────────────────────────────────────────────────────────
-const GROUP_LETTERS = ["A", "B", "C", "D", "E", "F", "G", "H"];
+// ─── Fixture / Armado del Mundial ──────────────────────────────────────────────
+function FixtureTab({ topCars, maxQualifiers, phase, groupCars }: {
+  topCars: { car_name: string; total_nominations: number }[];
+  maxQualifiers: number;
+  phase: TournamentPhase;
+  groupCars: GroupCar[];
+}) {
+  const built = groupCars.length > 0;
+  return built
+    ? <BuiltGroups groupCars={groupCars} phase={phase} />
+    : <BuildPanel topCars={topCars} maxQualifiers={maxQualifiers} />;
+}
 
-function FixtureTab({ topCars, maxQualifiers }: { topCars: { car_name: string; total_nominations: number }[]; maxQualifiers: number }) {
+// Estado PREVIO al armado: preview + botón de armar
+function BuildPanel({ topCars, maxQualifiers }: { topCars: { car_name: string; total_nominations: number }[]; maxQualifiers: number }) {
+  const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
   const qualifiers = topCars.slice(0, maxQualifiers);
-  const groupCount = maxQualifiers <= 16 ? 4 : maxQualifiers <= 24 ? 6 : 8;
-  const groups = GROUP_LETTERS.slice(0, groupCount).map((letter, gi) => ({
-    letter, cars: qualifiers.slice(gi * 4, gi * 4 + 4),
-  }));
+  const enough = topCars.length >= maxQualifiers;
+
+  const handleBuild = () => {
+    if (!confirm(`¿Cerrar las clasificaciones y armar el Mundial con los ${maxQualifiers} más votados?\n\nEsto CIERRA las nominaciones y sortea los grupos. Podés re-sortear después, pero no se pueden agregar más votos de clasificación.`)) return;
+    setError(null);
+    startTransition(async () => {
+      const res = await buildTournament();
+      if (!res.ok) setError(res.error);
+    });
+  };
+
+  return (
+    <div className="space-y-4">
+      <h2 className="font-display text-3xl text-ink">ARMAR EL MUNDIAL</h2>
+
+      <div className="bg-ink rounded-2xl p-5 space-y-3">
+        <p className="text-white text-sm">
+          Vas a cerrar las clasificaciones y armar los grupos con sistema de <strong>bombos (FIFA)</strong>:
+          los más votados quedan separados como cabezas de serie.
+        </p>
+        <div className="flex items-center gap-4 text-xs text-white/50">
+          <span><strong className="text-white">{topCars.length}</strong> autos votados</span>
+          <span><strong className="text-white">{maxQualifiers}</strong> clasifican</span>
+          <span><strong className="text-white">{Math.floor(maxQualifiers / 4)}</strong> grupos de 4</span>
+        </div>
+
+        {!enough && (
+          <div className="flex items-start gap-2 bg-crimson/15 border border-crimson/30 rounded-xl px-3 py-2.5 text-crimson text-xs">
+            <AlertTriangle size={14} className="shrink-0 mt-0.5" />
+            Solo hay {topCars.length} autos. Necesitás {maxQualifiers}. Bajá &quot;clasifican al mundial&quot; en el Dashboard.
+          </div>
+        )}
+        {error && (
+          <div className="flex items-start gap-2 bg-crimson/15 border border-crimson/30 rounded-xl px-3 py-2.5 text-crimson text-xs">
+            <AlertTriangle size={14} className="shrink-0 mt-0.5" />{error}
+          </div>
+        )}
+
+        <button
+          onClick={handleBuild}
+          disabled={pending || !enough}
+          className="w-full flex items-center justify-center gap-2 bg-rust text-white font-display text-xl py-3 rounded-xl tracking-wide hover:bg-rust-dark transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+        >
+          <Shuffle size={18} />
+          {pending ? "ARMANDO..." : "CERRAR CLASIFICACIÓN Y SORTEAR GRUPOS"}
+        </button>
+      </div>
+
+      <p className="text-xs text-muted">Vista previa de los {maxQualifiers} que clasificarían (por ranking, sin sorteo todavía):</p>
+      <div className="bg-white rounded-2xl border border-border overflow-hidden shadow-sm">
+        <div className="divide-y divide-border max-h-[40vh] overflow-y-auto">
+          {qualifiers.map((car, i) => (
+            <div key={car.car_name} className="flex items-center gap-3 px-4 py-2.5">
+              <span className={`font-display text-base w-6 text-center shrink-0 ${i < 8 ? "text-gold" : "text-muted/50"}`}>{i + 1}</span>
+              <span className="flex-1 text-sm text-ink truncate">{car.car_name}</span>
+              {i < 8 && <span className="text-[10px] text-gold font-semibold shrink-0">BOMBO 1</span>}
+              <span className="text-xs text-muted shrink-0">{car.total_nominations}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Estado POSTERIOR: grupos ya armados
+function BuiltGroups({ groupCars, phase }: { groupCars: GroupCar[]; phase: TournamentPhase }) {
+  const [pending, startTransition] = useTransition();
+  const letters = [...new Set(groupCars.map((c) => c.group_letter).filter(Boolean))].sort() as string[];
+
+  const handleResort = () => {
+    if (!confirm("¿Volver a sortear los grupos? Se reasignan al azar de nuevo (mismos clasificados).")) return;
+    startTransition(async () => { await buildTournament(); });
+  };
+  const handleReopen = () => {
+    if (!confirm("¿Reabrir las clasificaciones? Esto BORRA los grupos armados y vuelve a la fase de votación de autos.")) return;
+    startTransition(async () => { await reopenClassification(); });
+  };
 
   return (
     <div className="space-y-4">
       <div className="flex items-baseline justify-between">
-        <h2 className="font-display text-3xl text-ink">FIXTURE PREVIEW</h2>
-        <span className="text-xs text-muted">top {maxQualifiers} actuales</span>
+        <h2 className="font-display text-3xl text-ink">GRUPOS</h2>
+        <span className="text-xs text-muted">Fase: {phase}</span>
       </div>
-      {qualifiers.length === 0 ? (
-        <p className="text-muted text-sm text-center py-10">Sin datos suficientes.</p>
-      ) : (
-        <>
-          <div className="bg-gold/10 border border-gold/25 rounded-xl px-4 py-2.5 text-xs text-ink/60">
-            Vista previa basada en el ranking actual. Los grupos reales se arman cuando cerrés la clasificación.
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {groups.map((group) => (
-              <div key={group.letter} className="bg-white rounded-xl border border-border overflow-hidden shadow-sm">
-                <div className="bg-ink px-4 py-2">
-                  <span className="font-display text-cream text-xl tracking-wider">GRUPO {group.letter}</span>
-                </div>
-                <div className="divide-y divide-border">
-                  {Array.from({ length: 4 }, (_, i) => (
-                    <div key={i} className="flex items-center gap-3 px-4 py-2.5">
-                      <span className="font-display text-muted text-base w-4">{i + 1}</span>
-                      {group.cars[i]
-                        ? <span className="text-sm text-ink">{group.cars[i].car_name}</span>
-                        : <span className="text-xs text-muted/40 italic">— vacante —</span>
-                      }
-                    </div>
-                  ))}
-                </div>
+
+      <div className="flex gap-2">
+        <button onClick={handleResort} disabled={pending}
+          className="flex items-center gap-2 bg-ink text-white text-sm px-4 py-2.5 rounded-xl hover:bg-ink/90 transition-colors disabled:opacity-40">
+          <Shuffle size={14} />Re-sortear
+        </button>
+        <button onClick={handleReopen} disabled={pending}
+          className="flex items-center gap-2 bg-white border border-crimson/30 text-crimson text-sm px-4 py-2.5 rounded-xl hover:bg-crimson/5 transition-colors disabled:opacity-40">
+          <RotateCcw size={14} />Reabrir clasificación
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {letters.map((letter) => {
+          const cars = groupCars.filter((c) => c.group_letter === letter).sort((a, b) => (a.group_position ?? 0) - (b.group_position ?? 0));
+          return (
+            <div key={letter} className="bg-white rounded-xl border border-border overflow-hidden shadow-sm">
+              <div className="bg-ink px-4 py-2">
+                <span className="font-display text-cream text-xl tracking-wider">GRUPO {letter}</span>
               </div>
-            ))}
-          </div>
-        </>
-      )}
+              <div className="divide-y divide-border">
+                {cars.map((car, i) => (
+                  <div key={car.car_name} className="flex items-center gap-3 px-4 py-2.5">
+                    <span className="font-display text-muted text-base w-4">{i + 1}</span>
+                    <span className="flex-1 text-sm text-ink truncate">{car.car_name}</span>
+                    <span className="text-xs text-muted shrink-0">{car.total_nominations}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
