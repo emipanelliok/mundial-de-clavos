@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { sql, IS_CONFIGURED } from "@/lib/db";
 import FixtureView from "@/components/FixtureView";
+import Bracket from "@/components/Bracket";
 import PhaseBar from "@/components/PhaseBar";
 import type { TournamentPhase, TournamentCar } from "@/lib/db";
 
@@ -38,8 +39,19 @@ export default async function FixturePage() {
         </div>
       </div>
       <div className="flex-1 px-4 py-6">
-        <div className="max-w-5xl mx-auto">
-          <FixtureView phase={phase} tournamentCars={cars} maxQualifiers={maxQualifiers} />
+        <div className="max-w-5xl mx-auto space-y-10">
+          <div>
+            <h2 className="font-display text-2xl text-ink mb-4 tracking-wide">FASE DE GRUPOS</h2>
+            <FixtureView phase={phase} tournamentCars={cars} maxQualifiers={maxQualifiers} />
+          </div>
+
+          <div>
+            <h2 className="font-display text-2xl text-ink mb-1 tracking-wide">LAS LLAVES</h2>
+            <p className="text-xs text-muted mb-4">
+              El camino al título. Se completa a medida que avanzan las rondas.
+            </p>
+            <Bracket />
+          </div>
         </div>
       </div>
       <footer className="px-4 py-6 text-center border-t border-border">

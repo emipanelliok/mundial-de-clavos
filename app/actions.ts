@@ -159,3 +159,83 @@ export async function getTournamentStats() {
     return { totalVoters: 0, totalNominations: 0, phase: "eliminatorias", maxQualifiers: 32, nominationsOpen: true, phaseEndsAt: null };
   }
 }
+
+// ─── Fase de grupos ────────────────────────────────────────────────────────────
+
+export interface VotingGroup {
+  letter: string;
+  cars: { id: string; car_name: string; total_nominations: number }[];
+}
+
+export async function getGroupsForVoting(): Promise<VotingGroup[]> {
+  if (!IS_CONFIGURED || !sql) return [];
+  try {
+    const rows = (await sql`
+      SELECT id, car_name, total_nominations, group_letter
+      FROM tournament_cars
+      WHERE group_letter IS NOT NULL
+      ORDER BY group_letter ASC, group_position ASC, seed ASC
+    `) as { id: string; car_name: string; total_nominations: number; group_letter: string }[];
+
+    const map = new Map<string, VotingGroup>();
+    for (const r of rows) {
+      if (!map.has(r.group_letter)) map.set(r.group_letter, { letter: r.group_letter, cars: [] });
+      map.get(r.group_letter)!.cars.push({ id: r.id, car_name: r.car_name, total_nominations: r.total_nominations });
+    }
+    return [...map.values()].sort((a, b) => a.letter.localeCompare(b.letter));
+  } catch {
+    return [];
+  }
+}
+
+export async function submitGroupVote(
+  twitterHandle: string,
+  carIds: string[]
+): Promise<NominationResult> {
+  const handle = twitterHandle.replace(/^@/, "").trim().toLowerCase();
+  if (!handle || !/^[a-z0-9_]{1,15}$/.test(handle))
+    return { success: false, error: "Ingresá un usuario de Twitter válido." };
+
+  const ids = [...new Set(carIds.filter(Boolean))];
+  if (ids.length === 0) return { success: false, error: "Elegí al menos un auto." };
+
+  if (!IS_CONFIGURED || !sql) return { success: false, error: "Base de datos no configurada." };
+
+  try {
+    const [config] = await sql`SELECT phase FROM tournament_config WHERE id = 1`;
+    if (config?.phase !== "grupos")
+      return { success: false, error: "La votación de grupos no está abierta." };
+
+    // ¿Ya votó esta persona?
+    const [existing] = await sql`SELECT 1 FROM group_votes WHERE voter_handle = ${handle} LIMIT 1`;
+    if (existing) return { success: false, error: `@${handle} ya votó la fase de grupos.` };
+
+    // Traer los autos elegidos con su grupo, y validar máx 2 por grupo
+    const cars = (await sql`
+      SELECT id, group_letter FROM tournament_cars WHERE id = ANY(${ids}::uuid[])
+    `) as { id: string; group_letter: string }[];
+
+    const perGroup = new Map<string, number>();
+    for (const c of cars) perGroup.set(c.group_letter, (perGroup.get(c.group_letter) ?? 0) + 1);
+    for (const [, n] of perGroup) {
+      if (n > 2) return { success: false, error: "Podés elegir hasta 2 autos por grupo." };
+    }
+
+    const hdrs = await headers();
+    const ip = hdrs.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+
+    for (const c of cars) {
+      await sql`
+        INSERT INTO group_votes (voter_handle, tournament_car_id, group_letter, ip_address)
+        VALUES (${handle}, ${c.id}, ${c.group_letter}, ${ip})
+      `;
+    }
+
+    return { success: true, message: `¡Listo @${handle}! Tu voto de la fase de grupos quedó registrado.` };
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : "";
+    if (msg.includes("unique") || msg.includes("23505"))
+      return { success: false, error: `@${handle} ya votó la fase de grupos.` };
+    return { success: false, error: "Error al guardar. Intentá de nuevo." };
+  }
+}
