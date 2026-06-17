@@ -15,18 +15,19 @@ const TABS = [
 
 type Tab = (typeof TABS)[number]["id"];
 
-type GroupCar = { car_name: string; total_nominations: number; seed: number | null; group_letter: string | null; group_position: number | null };
+type GroupCar = { car_name: string; total_nominations: number; seed: number | null; group_letter: string | null; group_position: number | null; group_votes: number };
 
 interface AdminLayoutProps {
   config: { phase: TournamentPhase; maxQualifiers: number; nominationsOpen: boolean; phaseEndsAt: string | null };
   topCars: { car_name: string; total_nominations: number }[];
   recentNominations: { twitter_handle: string; email: string | null; created_at: string; cars: string[] }[];
   groupCars: GroupCar[];
+  groupVoters: number;
   totalVoters: number;
   totalCars: number;
 }
 
-export default function AdminLayout({ config, topCars, recentNominations, groupCars, totalVoters, totalCars }: AdminLayoutProps) {
+export default function AdminLayout({ config, topCars, recentNominations, groupCars, groupVoters, totalVoters, totalCars }: AdminLayoutProps) {
   const [tab, setTab] = useState<Tab>("dashboard");
   const [nominations, setNominations] = useState(recentNominations);
 
@@ -81,7 +82,7 @@ export default function AdminLayout({ config, topCars, recentNominations, groupC
           {tab === "dashboard" && <DashboardTab config={config} totalVoters={totalVoters} totalCars={totalCars} topCars={topCars} />}
           {tab === "autos"     && <AutosTab topCars={topCars} maxQualifiers={config.maxQualifiers} />}
           {tab === "votantes"  && <VotantesTab nominations={nominations} totalVoters={totalVoters} onDelete={handleDelete} />}
-          {tab === "fixture"   && <FixtureTab topCars={topCars} maxQualifiers={config.maxQualifiers} phase={config.phase} groupCars={groupCars} />}
+          {tab === "fixture"   && <FixtureTab topCars={topCars} maxQualifiers={config.maxQualifiers} phase={config.phase} groupCars={groupCars} groupVoters={groupVoters} />}
         </div>
       </main>
     </div>
@@ -280,15 +281,16 @@ function NomCard({ nom, onDelete }: {
 }
 
 // ─── Fixture / Armado del Mundial ──────────────────────────────────────────────
-function FixtureTab({ topCars, maxQualifiers, phase, groupCars }: {
+function FixtureTab({ topCars, maxQualifiers, phase, groupCars, groupVoters }: {
   topCars: { car_name: string; total_nominations: number }[];
   maxQualifiers: number;
   phase: TournamentPhase;
   groupCars: GroupCar[];
+  groupVoters: number;
 }) {
   const built = groupCars.length > 0;
   return built
-    ? <BuiltGroups groupCars={groupCars} phase={phase} />
+    ? <BuiltGroups groupCars={groupCars} phase={phase} groupVoters={groupVoters} />
     : <BuildPanel topCars={topCars} maxQualifiers={maxQualifiers} />;
 }
 
@@ -362,17 +364,18 @@ function BuildPanel({ topCars, maxQualifiers }: { topCars: { car_name: string; t
   );
 }
 
-// Estado POSTERIOR: grupos ya armados
-function BuiltGroups({ groupCars, phase }: { groupCars: GroupCar[]; phase: TournamentPhase }) {
+// Estado POSTERIOR: grupos ya armados — con votos de fase de grupos en vivo
+function BuiltGroups({ groupCars, phase, groupVoters }: { groupCars: GroupCar[]; phase: TournamentPhase; groupVoters: number }) {
   const [pending, startTransition] = useTransition();
   const letters = [...new Set(groupCars.map((c) => c.group_letter).filter(Boolean))].sort() as string[];
+  const totalGroupVotes = groupCars.reduce((s, c) => s + c.group_votes, 0);
 
   const handleResort = () => {
-    if (!confirm("¿Volver a sortear los grupos? Se reasignan al azar de nuevo (mismos clasificados).")) return;
+    if (!confirm("¿Volver a sortear los grupos? Se reasignan al azar de nuevo (mismos clasificados).\n\nOJO: si ya hay votos de fase de grupos, se BORRAN.")) return;
     startTransition(async () => { await buildTournament(); });
   };
   const handleReopen = () => {
-    if (!confirm("¿Reabrir las clasificaciones? Esto BORRA los grupos armados y vuelve a la fase de votación de autos.")) return;
+    if (!confirm("¿Reabrir las clasificaciones? Esto BORRA los grupos armados y los votos de fase de grupos, y vuelve a la votación de autos.")) return;
     startTransition(async () => { await reopenClassification(); });
   };
 
@@ -383,33 +386,46 @@ function BuiltGroups({ groupCars, phase }: { groupCars: GroupCar[]; phase: Tourn
         <span className="text-xs text-muted">Fase: {phase}</span>
       </div>
 
-      <div className="flex gap-2">
-        <button onClick={handleResort} disabled={pending}
-          className="flex items-center gap-2 bg-ink text-white text-sm px-4 py-2.5 rounded-xl hover:bg-ink/90 transition-colors disabled:opacity-40">
-          <Shuffle size={14} />Re-sortear
-        </button>
-        <button onClick={handleReopen} disabled={pending}
-          className="flex items-center gap-2 bg-white border border-crimson/30 text-crimson text-sm px-4 py-2.5 rounded-xl hover:bg-crimson/5 transition-colors disabled:opacity-40">
-          <RotateCcw size={14} />Reabrir clasificación
-        </button>
+      {/* Resumen votación de grupos */}
+      <div className="bg-ink rounded-2xl p-4 flex items-center gap-6">
+        <div>
+          <p className="font-display text-3xl text-rust leading-none">{groupVoters.toLocaleString()}</p>
+          <p className="text-xs text-white/50 mt-0.5">votantes de grupos</p>
+        </div>
+        <div className="w-px h-8 bg-white/10" />
+        <div>
+          <p className="font-display text-3xl text-white leading-none">{totalGroupVotes.toLocaleString()}</p>
+          <p className="text-xs text-white/50 mt-0.5">votos emitidos</p>
+        </div>
       </div>
+
+      <p className="text-xs text-muted">
+        Ordenado por votos de la fase de grupos. Los <strong className="text-rust">2 primeros</strong> de cada grupo (marcados PASA) avanzan a octavos.
+      </p>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {letters.map((letter) => {
-          const cars = groupCars.filter((c) => c.group_letter === letter).sort((a, b) => (a.group_position ?? 0) - (b.group_position ?? 0));
+          // ordenar por votos de grupos desc; desempate por votos de clasificación
+          const cars = groupCars
+            .filter((c) => c.group_letter === letter)
+            .sort((a, b) => b.group_votes - a.group_votes || b.total_nominations - a.total_nominations);
           return (
             <div key={letter} className="bg-white rounded-xl border border-border overflow-hidden shadow-sm">
               <div className="bg-ink px-4 py-2">
                 <span className="font-display text-cream text-xl tracking-wider">GRUPO {letter}</span>
               </div>
               <div className="divide-y divide-border">
-                {cars.map((car, i) => (
-                  <div key={car.car_name} className="flex items-center gap-3 px-4 py-2.5">
-                    <span className="font-display text-muted text-base w-4">{i + 1}</span>
-                    <span className="flex-1 text-sm text-ink truncate">{car.car_name}</span>
-                    <span className="text-xs text-muted shrink-0">{car.total_nominations}</span>
-                  </div>
-                ))}
+                {cars.map((car, i) => {
+                  const passes = i < 2;
+                  return (
+                    <div key={car.car_name} className={`flex items-center gap-3 px-4 py-2.5 ${passes ? "bg-rust/5" : ""}`}>
+                      <span className={`font-display text-base w-4 ${passes ? "text-rust" : "text-muted/40"}`}>{i + 1}</span>
+                      <span className="flex-1 text-sm text-ink truncate">{car.car_name}</span>
+                      {passes && <span className="text-[9px] bg-rust text-white font-semibold px-1.5 py-0.5 rounded shrink-0">PASA</span>}
+                      <span className={`text-sm font-display shrink-0 ${car.group_votes > 0 ? "text-ink" : "text-muted/40"}`}>{car.group_votes}</span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           );
