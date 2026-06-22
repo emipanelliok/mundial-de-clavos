@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { LayoutDashboard, Car, Users, Trophy, Image as ImageIcon, Lock, Unlock, Trash2, Pencil, Check, X, Shuffle, RotateCcw, AlertTriangle, ChevronRight } from "lucide-react";
 import AdminControls from "./AdminControls";
-import { deleteNomination, renameCar, buildTournament, reopenClassification, advanceRound, setCarImage } from "@/app/admin/actions";
+import { deleteNomination, renameCar, buildTournament, reopenClassification, advanceRound, setCarImage, setMatchCar } from "@/app/admin/actions";
 import type { TournamentPhase } from "@/lib/db";
 import type { BracketMatch } from "@/app/actions";
 
@@ -88,7 +88,7 @@ export default function AdminLayout({ config, topCars, recentNominations, groupC
           {tab === "dashboard" && <DashboardTab config={config} totalVoters={totalVoters} totalCars={totalCars} topCars={topCars} />}
           {tab === "autos"     && <AutosTab topCars={topCars} maxQualifiers={config.maxQualifiers} />}
           {tab === "votantes"  && <VotantesTab nominations={nominations} totalVoters={totalVoters} onDelete={handleDelete} />}
-          {tab === "fixture"   && <FixtureTab topCars={topCars} maxQualifiers={config.maxQualifiers} phase={config.phase} groupCars={groupCars} groupVoters={groupVoters} bracketMatches={bracketMatches} />}
+          {tab === "fixture"   && <FixtureTab topCars={topCars} maxQualifiers={config.maxQualifiers} phase={config.phase} groupCars={groupCars} groupVoters={groupVoters} bracketMatches={bracketMatches} allCars={photoCars} />}
           {tab === "fotos"     && <PhotosTab cars={photoCars} />}
         </div>
       </main>
@@ -290,15 +290,16 @@ function NomCard({ nom, onDelete }: {
 // ─── Fixture / Armado del Mundial ──────────────────────────────────────────────
 const KNOCKOUT_PHASES = ["octavos", "cuartos", "semifinal", "final", "terminado"];
 
-function FixtureTab({ topCars, maxQualifiers, phase, groupCars, groupVoters, bracketMatches }: {
+function FixtureTab({ topCars, maxQualifiers, phase, groupCars, groupVoters, bracketMatches, allCars }: {
   topCars: { car_name: string; total_nominations: number }[];
   maxQualifiers: number;
   phase: TournamentPhase;
   groupCars: GroupCar[];
   groupVoters: number;
   bracketMatches: BracketMatch[];
+  allCars: PhotoCar[];
 }) {
-  if (KNOCKOUT_PHASES.includes(phase)) return <KnockoutPanel phase={phase} bracketMatches={bracketMatches} />;
+  if (KNOCKOUT_PHASES.includes(phase)) return <KnockoutPanel phase={phase} bracketMatches={bracketMatches} allCars={allCars} />;
   if (groupCars.length > 0) return <BuiltGroups groupCars={groupCars} phase={phase} groupVoters={groupVoters} />;
   return <BuildPanel topCars={topCars} maxQualifiers={maxQualifiers} />;
 }
@@ -311,7 +312,7 @@ const PHASE_LABEL: Record<string, string> = {
   octavos: "OCTAVOS", cuartos: "CUARTOS", semifinal: "SEMIFINAL", final: "FINAL", terminado: "TERMINADO",
 };
 
-function KnockoutPanel({ phase, bracketMatches }: { phase: TournamentPhase; bracketMatches: BracketMatch[] }) {
+function KnockoutPanel({ phase, bracketMatches, allCars }: { phase: TournamentPhase; bracketMatches: BracketMatch[]; allCars: PhotoCar[] }) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const current = bracketMatches.filter((m) => m.phase === phase);
@@ -365,6 +366,8 @@ function KnockoutPanel({ phase, bracketMatches }: { phase: TournamentPhase; brac
         </button>
       </div>
 
+      <p className="text-xs text-muted">Si hay un auto mal (duplicado, error), tocá &quot;cambiar&quot; y elegí otro. Se reinician los votos de ese partido.</p>
+
       <div className="space-y-2">
         {current.map((m, i) => {
           const decided = !m.is_active && m.winner_id;
@@ -374,17 +377,57 @@ function KnockoutPanel({ phase, bracketMatches }: { phase: TournamentPhase; brac
             <div key={i} className="bg-white rounded-xl border border-border px-4 py-3 shadow-sm">
               <p className="text-[10px] text-muted uppercase tracking-widest mb-2">Partido {m.match_number}</p>
               <div className="flex items-center gap-3">
-                <span className={`flex-1 text-sm ${w1 ? "text-rust font-bold" : "text-ink"}`}>{m.car1_name ?? "—"}</span>
+                <div className="flex-1 min-w-0">
+                  <span className={`block text-sm truncate ${w1 ? "text-rust font-bold" : "text-ink"}`}>{m.car1_name ?? "—"}</span>
+                  <CarSwap matchId={m.id} slot={1} cars={allCars} pending={pending} run={startTransition} />
+                </div>
                 <span className={`font-display text-lg tabular-nums ${w1 ? "text-rust" : "text-muted"}`}>{m.car1_votes}</span>
                 <span className="text-muted text-xs">vs</span>
                 <span className={`font-display text-lg tabular-nums ${w2 ? "text-rust" : "text-muted"}`}>{m.car2_votes}</span>
-                <span className={`flex-1 text-sm text-right ${w2 ? "text-rust font-bold" : "text-ink"}`}>{m.car2_name ?? "—"}</span>
+                <div className="flex-1 min-w-0 text-right">
+                  <span className={`block text-sm truncate ${w2 ? "text-rust font-bold" : "text-ink"}`}>{m.car2_name ?? "—"}</span>
+                  <CarSwap matchId={m.id} slot={2} cars={allCars} pending={pending} run={startTransition} align="right" />
+                </div>
               </div>
             </div>
           );
         })}
       </div>
     </div>
+  );
+}
+
+// Selector para reemplazar un auto de un partido
+function CarSwap({ matchId, slot, cars, pending, run, align }: {
+  matchId: string; slot: 1 | 2; cars: PhotoCar[]; pending: boolean;
+  run: (cb: () => void) => void; align?: "right";
+}) {
+  const [open, setOpen] = useState(false);
+  if (!open) {
+    return (
+      <button onClick={() => setOpen(true)} className={`text-[10px] text-muted/60 hover:text-rust ${align === "right" ? "ml-auto" : ""}`}>
+        cambiar
+      </button>
+    );
+  }
+  return (
+    <select
+      autoFocus
+      disabled={pending}
+      defaultValue=""
+      onChange={(e) => {
+        const carId = e.target.value;
+        if (!carId) { setOpen(false); return; }
+        run(async () => { await setMatchCar(matchId, slot, carId); setOpen(false); });
+      }}
+      onBlur={() => setOpen(false)}
+      className="text-[11px] bg-surface border border-border rounded px-1 py-0.5 outline-none max-w-[140px]"
+    >
+      <option value="">elegir…</option>
+      {cars.map((c) => (
+        <option key={c.id} value={c.id}>{c.group_letter ? `${c.group_letter} · ` : ""}{c.car_name}</option>
+      ))}
+    </select>
   );
 }
 

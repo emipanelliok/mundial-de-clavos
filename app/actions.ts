@@ -274,6 +274,7 @@ export async function getActiveMatches(): Promise<MatchCard[]> {
 }
 
 export interface BracketMatch {
+  id: string;
   phase: string;
   match_number: number;
   car1_name: string | null;
@@ -292,7 +293,7 @@ export async function getBracketMatches(): Promise<BracketMatch[]> {
   if (!IS_CONFIGURED || !sql) return [];
   try {
     return (await sql`
-      SELECT m.phase, m.match_number, m.car1_id, m.car2_id, m.winner_id, m.is_active,
+      SELECT m.id, m.phase, m.match_number, m.car1_id, m.car2_id, m.winner_id, m.is_active,
         m.car1_votes, m.car2_votes,
         c1.car_name AS car1_name, c1.image_url AS car1_img,
         c2.car_name AS car2_name, c2.image_url AS car2_img

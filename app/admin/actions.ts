@@ -263,3 +263,16 @@ export async function setCarImage(carId: string, imageUrl: string) {
   await sql`UPDATE tournament_cars SET image_url = ${clean} WHERE id = ${carId}`;
   revalidatePath("/"); revalidatePath("/fixture"); revalidatePath("/votar"); revalidatePath("/admin");
 }
+
+// Reemplaza uno de los dos autos de un partido (corrige errores / duplicados).
+// Borra los votos del partido para que arranque limpio.
+export async function setMatchCar(matchId: string, slot: 1 | 2, carId: string) {
+  if (!sql) throw new Error("Base de datos no configurada.");
+  if (slot === 1) {
+    await sql`UPDATE matches SET car1_id = ${carId}, car1_votes = 0, winner_id = NULL WHERE id = ${matchId}`;
+  } else {
+    await sql`UPDATE matches SET car2_id = ${carId}, car2_votes = 0, winner_id = NULL WHERE id = ${matchId}`;
+  }
+  await sql`DELETE FROM match_votes WHERE match_id = ${matchId}`;
+  revalidatePath("/"); revalidatePath("/fixture"); revalidatePath("/votar"); revalidatePath("/admin");
+}
