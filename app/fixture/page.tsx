@@ -4,9 +4,10 @@ import { sql, IS_CONFIGURED } from "@/lib/db";
 import FixtureView from "@/components/FixtureView";
 import Bracket from "@/components/Bracket";
 import PhaseBar from "@/components/PhaseBar";
+import { getBracketMatches } from "../actions";
 import type { TournamentPhase, TournamentCar } from "@/lib/db";
 
-export const revalidate = 60;
+export const revalidate = 30;
 
 async function getFixtureData() {
   if (!IS_CONFIGURED || !sql) return { phase: "eliminatorias" as TournamentPhase, maxQualifiers: 32, cars: [] as TournamentCar[] };
@@ -26,7 +27,10 @@ async function getFixtureData() {
 }
 
 export default async function FixturePage() {
-  const { phase, maxQualifiers, cars } = await getFixtureData();
+  const [{ phase, maxQualifiers, cars }, bracketMatches] = await Promise.all([
+    getFixtureData(),
+    getBracketMatches(),
+  ]);
   return (
     <main className="min-h-screen flex flex-col">
       <div className="bg-ink px-4 py-4">
@@ -50,7 +54,7 @@ export default async function FixturePage() {
             <p className="text-xs text-muted mb-4">
               El camino al título. Se completa a medida que avanzan las rondas.
             </p>
-            <Bracket />
+            <Bracket matches={bracketMatches} />
           </div>
         </div>
       </div>

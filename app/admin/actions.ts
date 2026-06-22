@@ -141,3 +141,125 @@ export async function reopenClassification() {
   revalidatePath("/fixture");
   revalidatePath("/admin");
 }
+
+// ─── Torneo eliminatorio ────────────────────────────────────────────────────────
+
+const NEXT_PHASE: Record<string, string> = {
+  octavos: "cuartos",
+  cuartos: "semifinal",
+  semifinal: "final",
+  final: "terminado",
+};
+
+// Cruces de octavos (grupo, posición) — estándar FIFA, coincide con Bracket.tsx
+const R16_CROSSES: [[string, number], [string, number]][] = [
+  [["A", 1], ["B", 2]], // M1
+  [["C", 1], ["D", 2]], // M2
+  [["E", 1], ["F", 2]], // M3
+  [["G", 1], ["H", 2]], // M4
+  [["B", 1], ["A", 2]], // M5
+  [["D", 1], ["C", 2]], // M6
+  [["F", 1], ["E", 2]], // M7
+  [["H", 1], ["G", 2]], // M8
+];
+
+export type AdvanceResult = { ok: true; phase: string; matches: number } | { ok: false; error: string };
+
+// Cierra la ronda actual y genera la siguiente.
+export async function advanceRound(): Promise<AdvanceResult> {
+  if (!sql) return { ok: false, error: "Base de datos no configurada." };
+
+  const [config] = await sql`SELECT phase FROM tournament_config WHERE id = 1`;
+  const phase: string = config?.phase ?? "";
+
+  // ── grupos → octavos ──
+  if (phase === "grupos") {
+    const ranked = (await sql`
+      SELECT tc.id, tc.group_letter,
+        row_number() OVER (
+          PARTITION BY tc.group_letter
+          ORDER BY count(gv.id) DESC, tc.total_nominations DESC, tc.seed ASC
+        ) AS rk
+      FROM tournament_cars tc
+      LEFT JOIN group_votes gv ON gv.tournament_car_id = tc.id
+      WHERE tc.group_letter IS NOT NULL
+      GROUP BY tc.id, tc.group_letter, tc.total_nominations, tc.seed
+    `) as { id: string; group_letter: string; rk: number }[];
+
+    const pick = new Map<string, string>(); // `${group}${pos}` -> car_id
+    for (const r of ranked) if (r.rk <= 2) pick.set(`${r.group_letter}${r.rk}`, r.id);
+
+    if (pick.size < 16)
+      return { ok: false, error: "Faltan clasificados para armar octavos. ¿Se votaron todos los grupos?" };
+
+    await sql`DELETE FROM match_votes`;
+    await sql`DELETE FROM matches`;
+
+    let n = 1;
+    for (const [[ga, pa], [gb, pb]] of R16_CROSSES) {
+      const c1 = pick.get(`${ga}${pa}`);
+      const c2 = pick.get(`${gb}${pb}`);
+      await sql`
+        INSERT INTO matches (phase, match_number, car1_id, car2_id, is_active)
+        VALUES ('octavos', ${n}, ${c1}, ${c2}, true)
+      `;
+      n++;
+    }
+    await sql`UPDATE tournament_config SET phase = 'octavos' WHERE id = 1`;
+    revalidatePath("/"); revalidatePath("/fixture"); revalidatePath("/votar"); revalidatePath("/admin");
+    return { ok: true, phase: "octavos", matches: 8 };
+  }
+
+  // ── octavos/cuartos/semifinal → siguiente · final → terminado ──
+  if (phase in NEXT_PHASE) {
+    const next = NEXT_PHASE[phase];
+
+    // Cerrar ronda actual: calcular votos y ganador de cada partido
+    const matches = (await sql`
+      SELECT m.id, m.match_number, m.car1_id, m.car2_id,
+        (SELECT count(*)::int FROM match_votes WHERE match_id = m.id AND voted_car_id = m.car1_id) AS v1,
+        (SELECT count(*)::int FROM match_votes WHERE match_id = m.id AND voted_car_id = m.car2_id) AS v2
+      FROM matches m WHERE m.phase = ${phase} ORDER BY m.match_number ASC
+    `) as { id: string; match_number: number; car1_id: string; car2_id: string; v1: number; v2: number }[];
+
+    const winners: string[] = [];
+    for (const m of matches) {
+      // ganador por votos; empate → car1 (cabeza de serie / mejor sembrado)
+      const winner = m.v2 > m.v1 ? m.car2_id : m.car1_id;
+      winners.push(winner);
+      await sql`
+        UPDATE matches SET car1_votes = ${m.v1}, car2_votes = ${m.v2}, winner_id = ${winner}, is_active = false
+        WHERE id = ${m.id}
+      `;
+    }
+
+    if (next === "terminado") {
+      await sql`UPDATE tournament_config SET phase = 'terminado' WHERE id = 1`;
+      revalidatePath("/"); revalidatePath("/fixture"); revalidatePath("/votar"); revalidatePath("/admin");
+      return { ok: true, phase: "terminado", matches: 0 };
+    }
+
+    // Crear siguiente ronda emparejando ganadores consecutivos
+    let n = 1;
+    for (let i = 0; i < winners.length; i += 2) {
+      await sql`
+        INSERT INTO matches (phase, match_number, car1_id, car2_id, is_active)
+        VALUES (${next}, ${n}, ${winners[i]}, ${winners[i + 1]}, true)
+      `;
+      n++;
+    }
+    await sql`UPDATE tournament_config SET phase = ${next} WHERE id = 1`;
+    revalidatePath("/"); revalidatePath("/fixture"); revalidatePath("/votar"); revalidatePath("/admin");
+    return { ok: true, phase: next, matches: Math.floor(winners.length / 2) };
+  }
+
+  return { ok: false, error: `No se puede avanzar desde la fase "${phase}".` };
+}
+
+// Setea la foto de un auto
+export async function setCarImage(carId: string, imageUrl: string) {
+  if (!sql) throw new Error("Base de datos no configurada.");
+  const clean = imageUrl.trim() || null;
+  await sql`UPDATE tournament_cars SET image_url = ${clean} WHERE id = ${carId}`;
+  revalidatePath("/"); revalidatePath("/fixture"); revalidatePath("/votar"); revalidatePath("/admin");
+}

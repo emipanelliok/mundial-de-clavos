@@ -239,3 +239,110 @@ export async function submitGroupVote(
     return { success: false, error: "Error al guardar. Intentá de nuevo." };
   }
 }
+
+// ─── Rondas eliminatorias (1v1) ─────────────────────────────────────────────────
+
+export interface MatchCard {
+  id: string;
+  match_number: number;
+  phase: string;
+  car1_id: string | null;
+  car1_name: string | null;
+  car1_img: string | null;
+  car2_id: string | null;
+  car2_name: string | null;
+  car2_img: string | null;
+}
+
+export async function getActiveMatches(): Promise<MatchCard[]> {
+  if (!IS_CONFIGURED || !sql) return [];
+  try {
+    return (await sql`
+      SELECT m.id, m.match_number, m.phase,
+        m.car1_id, c1.car_name AS car1_name, c1.image_url AS car1_img,
+        m.car2_id, c2.car_name AS car2_name, c2.image_url AS car2_img
+      FROM matches m
+      LEFT JOIN tournament_cars c1 ON c1.id = m.car1_id
+      LEFT JOIN tournament_cars c2 ON c2.id = m.car2_id
+      WHERE m.is_active = true
+        AND m.phase = (SELECT phase FROM tournament_config WHERE id = 1)
+      ORDER BY m.match_number ASC
+    `) as MatchCard[];
+  } catch {
+    return [];
+  }
+}
+
+export interface BracketMatch {
+  phase: string;
+  match_number: number;
+  car1_name: string | null;
+  car1_img: string | null;
+  car1_votes: number;
+  car2_name: string | null;
+  car2_img: string | null;
+  car2_votes: number;
+  winner_id: string | null;
+  car1_id: string | null;
+  car2_id: string | null;
+  is_active: boolean;
+}
+
+export async function getBracketMatches(): Promise<BracketMatch[]> {
+  if (!IS_CONFIGURED || !sql) return [];
+  try {
+    return (await sql`
+      SELECT m.phase, m.match_number, m.car1_id, m.car2_id, m.winner_id, m.is_active,
+        m.car1_votes, m.car2_votes,
+        c1.car_name AS car1_name, c1.image_url AS car1_img,
+        c2.car_name AS car2_name, c2.image_url AS car2_img
+      FROM matches m
+      LEFT JOIN tournament_cars c1 ON c1.id = m.car1_id
+      LEFT JOIN tournament_cars c2 ON c2.id = m.car2_id
+      ORDER BY m.phase, m.match_number ASC
+    `) as BracketMatch[];
+  } catch {
+    return [];
+  }
+}
+
+// Vota partidos 1v1. picks = [{ matchId, carId }]. Un voto por persona por ronda.
+export async function submitMatchVotes(
+  twitterHandle: string,
+  picks: { matchId: string; carId: string }[]
+): Promise<NominationResult> {
+  const handle = twitterHandle.replace(/^@/, "").trim().toLowerCase();
+  if (!handle || !/^[a-z0-9_]{1,15}$/.test(handle))
+    return { success: false, error: "Ingresá un usuario de Twitter válido." };
+
+  const valid = picks.filter((p) => p.matchId && p.carId);
+  if (valid.length === 0) return { success: false, error: "Elegí al menos un ganador." };
+
+  if (!IS_CONFIGURED || !sql) return { success: false, error: "Base de datos no configurada." };
+
+  try {
+    // ¿ya votó esta ronda?
+    const [existing] = await sql`
+      SELECT 1 FROM match_votes mv
+      JOIN matches m ON m.id = mv.match_id
+      WHERE mv.voter_identifier = ${handle} AND m.is_active = true
+      LIMIT 1
+    `;
+    if (existing) return { success: false, error: `@${handle} ya votó esta ronda.` };
+
+    for (const p of valid) {
+      await sql`
+        INSERT INTO match_votes (match_id, voter_identifier, voted_car_id)
+        VALUES (${p.matchId}, ${handle}, ${p.carId})
+        ON CONFLICT (match_id, voter_identifier) DO NOTHING
+      `;
+    }
+
+    return { success: true, message: `¡Listo @${handle}! Tu voto quedó registrado.` };
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : "";
+    if (msg.includes("unique") || msg.includes("23505"))
+      return { success: false, error: `@${handle} ya votó esta ronda.` };
+    return { success: false, error: "Error al guardar. Intentá de nuevo." };
+  }
+}

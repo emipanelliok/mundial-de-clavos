@@ -1,17 +1,21 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { LayoutDashboard, Car, Users, Trophy, Lock, Unlock, Trash2, Pencil, Check, X, Shuffle, RotateCcw, AlertTriangle } from "lucide-react";
+import { LayoutDashboard, Car, Users, Trophy, Image as ImageIcon, Lock, Unlock, Trash2, Pencil, Check, X, Shuffle, RotateCcw, AlertTriangle, ChevronRight } from "lucide-react";
 import AdminControls from "./AdminControls";
-import { deleteNomination, renameCar, buildTournament, reopenClassification } from "@/app/admin/actions";
+import { deleteNomination, renameCar, buildTournament, reopenClassification, advanceRound, setCarImage } from "@/app/admin/actions";
 import type { TournamentPhase } from "@/lib/db";
+import type { BracketMatch } from "@/app/actions";
 
 const TABS = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { id: "autos",     label: "Autos",     icon: Car },
   { id: "votantes",  label: "Votantes",  icon: Users },
   { id: "fixture",   label: "Fixture",   icon: Trophy },
+  { id: "fotos",     label: "Fotos",     icon: ImageIcon },
 ] as const;
+
+type PhotoCar = { id: string; car_name: string; image_url: string | null; group_letter: string | null };
 
 type Tab = (typeof TABS)[number]["id"];
 
@@ -23,11 +27,13 @@ interface AdminLayoutProps {
   recentNominations: { twitter_handle: string; email: string | null; created_at: string; cars: string[] }[];
   groupCars: GroupCar[];
   groupVoters: number;
+  photoCars: PhotoCar[];
+  bracketMatches: BracketMatch[];
   totalVoters: number;
   totalCars: number;
 }
 
-export default function AdminLayout({ config, topCars, recentNominations, groupCars, groupVoters, totalVoters, totalCars }: AdminLayoutProps) {
+export default function AdminLayout({ config, topCars, recentNominations, groupCars, groupVoters, photoCars, bracketMatches, totalVoters, totalCars }: AdminLayoutProps) {
   const [tab, setTab] = useState<Tab>("dashboard");
   const [nominations, setNominations] = useState(recentNominations);
 
@@ -82,7 +88,8 @@ export default function AdminLayout({ config, topCars, recentNominations, groupC
           {tab === "dashboard" && <DashboardTab config={config} totalVoters={totalVoters} totalCars={totalCars} topCars={topCars} />}
           {tab === "autos"     && <AutosTab topCars={topCars} maxQualifiers={config.maxQualifiers} />}
           {tab === "votantes"  && <VotantesTab nominations={nominations} totalVoters={totalVoters} onDelete={handleDelete} />}
-          {tab === "fixture"   && <FixtureTab topCars={topCars} maxQualifiers={config.maxQualifiers} phase={config.phase} groupCars={groupCars} groupVoters={groupVoters} />}
+          {tab === "fixture"   && <FixtureTab topCars={topCars} maxQualifiers={config.maxQualifiers} phase={config.phase} groupCars={groupCars} groupVoters={groupVoters} bracketMatches={bracketMatches} />}
+          {tab === "fotos"     && <PhotosTab cars={photoCars} />}
         </div>
       </main>
     </div>
@@ -281,17 +288,177 @@ function NomCard({ nom, onDelete }: {
 }
 
 // ─── Fixture / Armado del Mundial ──────────────────────────────────────────────
-function FixtureTab({ topCars, maxQualifiers, phase, groupCars, groupVoters }: {
+const KNOCKOUT_PHASES = ["octavos", "cuartos", "semifinal", "final", "terminado"];
+
+function FixtureTab({ topCars, maxQualifiers, phase, groupCars, groupVoters, bracketMatches }: {
   topCars: { car_name: string; total_nominations: number }[];
   maxQualifiers: number;
   phase: TournamentPhase;
   groupCars: GroupCar[];
   groupVoters: number;
+  bracketMatches: BracketMatch[];
 }) {
-  const built = groupCars.length > 0;
-  return built
-    ? <BuiltGroups groupCars={groupCars} phase={phase} groupVoters={groupVoters} />
-    : <BuildPanel topCars={topCars} maxQualifiers={maxQualifiers} />;
+  if (KNOCKOUT_PHASES.includes(phase)) return <KnockoutPanel phase={phase} bracketMatches={bracketMatches} />;
+  if (groupCars.length > 0) return <BuiltGroups groupCars={groupCars} phase={phase} groupVoters={groupVoters} />;
+  return <BuildPanel topCars={topCars} maxQualifiers={maxQualifiers} />;
+}
+
+// Panel de fases eliminatorias: partidos de la ronda + botón avanzar
+const NEXT_LABEL: Record<string, string> = {
+  octavos: "CUARTOS", cuartos: "SEMIFINAL", semifinal: "FINAL", final: "CORONAR CAMPEÓN",
+};
+const PHASE_LABEL: Record<string, string> = {
+  octavos: "OCTAVOS", cuartos: "CUARTOS", semifinal: "SEMIFINAL", final: "FINAL", terminado: "TERMINADO",
+};
+
+function KnockoutPanel({ phase, bracketMatches }: { phase: TournamentPhase; bracketMatches: BracketMatch[] }) {
+  const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+  const current = bracketMatches.filter((m) => m.phase === phase);
+
+  // campeón (fase terminada): ganador de la final
+  if (phase === "terminado") {
+    const final = bracketMatches.find((m) => m.phase === "final");
+    const champ = final?.winner_id === final?.car1_id ? final?.car1_name : final?.car2_name;
+    return (
+      <div className="space-y-4 text-center py-8">
+        <h2 className="font-display text-3xl text-ink">🏆 GRAN CAMPEÓN</h2>
+        <p className="font-display text-5xl text-rust">{champ ?? "—"}</p>
+        <p className="text-sm text-muted">El Mundial de Clavos 2026 terminó.</p>
+      </div>
+    );
+  }
+
+  const handleAdvance = () => {
+    const lbl = NEXT_LABEL[phase] ?? "siguiente ronda";
+    if (!confirm(`¿Cerrar ${PHASE_LABEL[phase]} y avanzar a ${lbl}?\n\nSe calcula el ganador de cada partido por votos y se arma la siguiente ronda. No se puede deshacer fácil.`)) return;
+    setError(null);
+    startTransition(async () => {
+      const res = await advanceRound();
+      if (!res.ok) setError(res.error);
+    });
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-baseline justify-between">
+        <h2 className="font-display text-3xl text-ink">{PHASE_LABEL[phase]}</h2>
+        <span className="text-xs text-muted">{current.length} partidos</span>
+      </div>
+
+      <div className="bg-ink rounded-2xl p-4 space-y-3">
+        <p className="text-white/70 text-sm">
+          Cuando cierre la votación de <strong className="text-white">{PHASE_LABEL[phase]}</strong>, avanzá a la siguiente ronda.
+          El más votado de cada cruce pasa.
+        </p>
+        {error && (
+          <div className="flex items-start gap-2 bg-crimson/15 border border-crimson/30 rounded-xl px-3 py-2.5 text-crimson text-xs">
+            <AlertTriangle size={14} className="shrink-0 mt-0.5" />{error}
+          </div>
+        )}
+        <button
+          onClick={handleAdvance}
+          disabled={pending}
+          className="w-full flex items-center justify-center gap-2 bg-rust text-white font-display text-xl py-3 rounded-xl tracking-wide hover:bg-rust-dark transition-colors disabled:opacity-40"
+        >
+          {pending ? "PROCESANDO..." : <>CERRAR {PHASE_LABEL[phase]} → {NEXT_LABEL[phase]}<ChevronRight size={18} /></>}
+        </button>
+      </div>
+
+      <div className="space-y-2">
+        {current.map((m, i) => {
+          const decided = !m.is_active && m.winner_id;
+          const w1 = decided && m.winner_id === m.car1_id;
+          const w2 = decided && m.winner_id === m.car2_id;
+          return (
+            <div key={i} className="bg-white rounded-xl border border-border px-4 py-3 shadow-sm">
+              <p className="text-[10px] text-muted uppercase tracking-widest mb-2">Partido {m.match_number}</p>
+              <div className="flex items-center gap-3">
+                <span className={`flex-1 text-sm ${w1 ? "text-rust font-bold" : "text-ink"}`}>{m.car1_name ?? "—"}</span>
+                <span className={`font-display text-lg tabular-nums ${w1 ? "text-rust" : "text-muted"}`}>{m.car1_votes}</span>
+                <span className="text-muted text-xs">vs</span>
+                <span className={`font-display text-lg tabular-nums ${w2 ? "text-rust" : "text-muted"}`}>{m.car2_votes}</span>
+                <span className={`flex-1 text-sm text-right ${w2 ? "text-rust font-bold" : "text-ink"}`}>{m.car2_name ?? "—"}</span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ─── Fotos ──────────────────────────────────────────────────────────────────────
+function PhotosTab({ cars }: { cars: PhotoCar[] }) {
+  const withPhoto = cars.filter((c) => c.image_url).length;
+  return (
+    <div className="space-y-4">
+      <div className="flex items-baseline justify-between">
+        <h2 className="font-display text-3xl text-ink">FOTOS</h2>
+        <span className="text-xs text-muted">{withPhoto}/{cars.length} con foto</span>
+      </div>
+      <p className="text-xs text-muted">
+        Pegá la URL de una imagen para cada auto (clic derecho → &quot;Copiar dirección de la imagen&quot; en Google Imágenes).
+        Aparecen en las llaves y en la votación 1v1.
+      </p>
+      {cars.length === 0 ? (
+        <p className="text-muted text-sm text-center py-10">Todavía no hay autos en el torneo.</p>
+      ) : (
+        <div className="space-y-2">
+          {cars.map((c) => <PhotoRow key={c.id} car={c} />)}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PhotoRow({ car }: { car: PhotoCar }) {
+  const [url, setUrl] = useState(car.image_url ?? "");
+  const [pending, startTransition] = useTransition();
+  const [saved, setSaved] = useState(false);
+  const dirty = url !== (car.image_url ?? "");
+
+  const save = () => {
+    startTransition(async () => {
+      await setCarImage(car.id, url);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 1500);
+    });
+  };
+
+  return (
+    <div className="bg-white rounded-xl border border-border p-3 shadow-sm flex items-center gap-3">
+      <div className="w-12 h-12 rounded-lg overflow-hidden bg-surface shrink-0 flex items-center justify-center">
+        {url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={url} alt="" className="w-full h-full object-cover" />
+        ) : (
+          <ImageIcon size={16} className="text-muted/40" />
+        )}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm text-ink font-medium truncate mb-1">
+          {car.group_letter && <span className="text-muted text-xs mr-1">{car.group_letter}</span>}
+          {car.car_name}
+        </p>
+        <input
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+          placeholder="https://...jpg"
+          className="w-full bg-surface border border-border rounded-lg px-2.5 py-1.5 text-xs text-ink outline-none focus:border-rust/40"
+        />
+      </div>
+      <button
+        onClick={save}
+        disabled={pending || (!dirty && !saved)}
+        className={`shrink-0 text-sm px-3 py-2 rounded-lg font-medium transition-colors ${
+          saved ? "bg-green-600 text-white" : dirty ? "bg-rust text-white hover:bg-rust-dark" : "bg-surface text-muted/40"
+        }`}
+      >
+        {pending ? "..." : saved ? "✓" : "Guardar"}
+      </button>
+    </div>
+  );
 }
 
 // Estado PREVIO al armado: preview + botón de armar
@@ -370,6 +537,8 @@ function BuiltGroups({ groupCars, phase, groupVoters }: { groupCars: GroupCar[];
   const letters = [...new Set(groupCars.map((c) => c.group_letter).filter(Boolean))].sort() as string[];
   const totalGroupVotes = groupCars.reduce((s, c) => s + c.group_votes, 0);
 
+  const [error, setError] = useState<string | null>(null);
+
   const handleResort = () => {
     if (!confirm("¿Volver a sortear los grupos? Se reasignan al azar de nuevo (mismos clasificados).\n\nOJO: si ya hay votos de fase de grupos, se BORRAN.")) return;
     startTransition(async () => { await buildTournament(); });
@@ -377,6 +546,14 @@ function BuiltGroups({ groupCars, phase, groupVoters }: { groupCars: GroupCar[];
   const handleReopen = () => {
     if (!confirm("¿Reabrir las clasificaciones? Esto BORRA los grupos armados y los votos de fase de grupos, y vuelve a la votación de autos.")) return;
     startTransition(async () => { await reopenClassification(); });
+  };
+  const handleAdvance = () => {
+    if (!confirm("¿Cerrar la fase de grupos y armar los OCTAVOS?\n\nPasan los 2 más votados de cada grupo (marcados PASA). Esto cierra la votación de grupos.")) return;
+    setError(null);
+    startTransition(async () => {
+      const res = await advanceRound();
+      if (!res.ok) setError(res.error);
+    });
   };
 
   return (
@@ -398,6 +575,20 @@ function BuiltGroups({ groupCars, phase, groupVoters }: { groupCars: GroupCar[];
           <p className="text-xs text-white/50 mt-0.5">votos emitidos</p>
         </div>
       </div>
+
+      {/* Avanzar a octavos */}
+      <button
+        onClick={handleAdvance}
+        disabled={pending}
+        className="w-full flex items-center justify-center gap-2 bg-rust text-white font-display text-xl py-3 rounded-xl tracking-wide hover:bg-rust-dark transition-colors disabled:opacity-40"
+      >
+        {pending ? "PROCESANDO..." : <>CERRAR GRUPOS → ARMAR OCTAVOS<ChevronRight size={18} /></>}
+      </button>
+      {error && (
+        <div className="flex items-start gap-2 bg-crimson/15 border border-crimson/30 rounded-xl px-3 py-2.5 text-crimson text-xs">
+          <AlertTriangle size={14} className="shrink-0 mt-0.5" />{error}
+        </div>
+      )}
 
       <p className="text-xs text-muted">
         Ordenado por votos de la fase de grupos. Los <strong className="text-rust">2 primeros</strong> de cada grupo (marcados PASA) avanzan a octavos.

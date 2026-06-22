@@ -1,5 +1,6 @@
 import { sql, IS_CONFIGURED } from "@/lib/db";
 import AdminLayout from "@/components/AdminLayout";
+import { getBracketMatches } from "../actions";
 import type { TournamentPhase } from "@/lib/db";
 
 export const revalidate = 0;
@@ -11,6 +12,8 @@ async function getAdminData() {
     recentNominations: [] as { twitter_handle: string; email: string | null; created_at: string; cars: string[] }[],
     groupCars: [] as { car_name: string; total_nominations: number; seed: number | null; group_letter: string | null; group_position: number | null; group_votes: number }[],
     groupVoters: 0,
+    photoCars: [] as { id: string; car_name: string; image_url: string | null; group_letter: string | null }[],
+    bracketMatches: [] as Awaited<ReturnType<typeof getBracketMatches>>,
     totalVoters: 0,
     totalCars: 0,
   };
@@ -49,12 +52,19 @@ async function getAdminData() {
       sql`SELECT count(distinct voter_handle)::int AS n FROM group_votes`,
     ]);
 
+    const [photoCars, bracketMatches] = await Promise.all([
+      sql`SELECT id, car_name, image_url, group_letter FROM tournament_cars ORDER BY group_letter ASC, group_position ASC`,
+      getBracketMatches(),
+    ]);
+
     return {
       config: config ?? empty.config,
       topCars: (topCars ?? []) as { car_name: string; total_nominations: number }[],
       recentNominations: (recent ?? []) as { twitter_handle: string; email: string | null; created_at: string; cars: string[] }[],
       groupCars: (groupCars ?? []) as { car_name: string; total_nominations: number; seed: number | null; group_letter: string | null; group_position: number | null; group_votes: number }[],
       groupVoters: (groupVoters as { n: number }[] | undefined)?.[0]?.n ?? 0,
+      photoCars: (photoCars ?? []) as { id: string; car_name: string; image_url: string | null; group_letter: string | null }[],
+      bracketMatches,
       totalVoters: voters?.n ?? 0,
       totalCars: cars?.n ?? 0,
     };
@@ -65,7 +75,7 @@ async function getAdminData() {
 }
 
 export default async function AdminPage() {
-  const { config, topCars, recentNominations, groupCars, groupVoters, totalVoters, totalCars } = await getAdminData();
+  const { config, topCars, recentNominations, groupCars, groupVoters, photoCars, bracketMatches, totalVoters, totalCars } = await getAdminData();
 
   return (
     <AdminLayout
@@ -79,6 +89,8 @@ export default async function AdminPage() {
       recentNominations={recentNominations}
       groupCars={groupCars}
       groupVoters={groupVoters}
+      photoCars={photoCars}
+      bracketMatches={bracketMatches}
       totalVoters={totalVoters}
       totalCars={totalCars}
     />
