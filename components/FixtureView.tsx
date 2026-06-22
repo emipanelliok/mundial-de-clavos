@@ -10,7 +10,26 @@ function buildGroups(cars: TournamentCar[], maxQualifiers: number) {
   });
 }
 
-function GroupCard({ group, phase }: { group: { letter: string; cars: (TournamentCar | null)[] }; phase: TournamentPhase }) {
+function GroupCard({ group, phase, compact }: { group: { letter: string; cars: (TournamentCar | null)[] }; phase: TournamentPhase; compact?: boolean }) {
+  if (compact) {
+    return (
+      <div className="bg-white rounded-xl border border-border overflow-hidden shadow-sm">
+        <div className="bg-ink px-3 py-1.5">
+          <span className="font-display text-cream text-lg tracking-wider">GRUPO {group.letter}</span>
+        </div>
+        <div className="divide-y divide-border">
+          {group.cars.map((car, i) => (
+            <div key={i} className="flex items-center gap-2 px-3 py-1.5">
+              <span className="font-display text-sm text-muted/50 w-4 text-center shrink-0">{i + 1}</span>
+              {car
+                ? <span className="text-xs text-ink truncate">{car.car_name}</span>
+                : <span className="text-[11px] text-muted/40 italic">{phase === "eliminatorias" ? "vacante" : "TBD"}</span>}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="bg-white rounded-2xl border-2 border-border overflow-hidden shadow-sm">
       <div className="bg-ink px-4 py-2.5 flex items-center justify-between">
@@ -34,8 +53,8 @@ function GroupCard({ group, phase }: { group: { letter: string; cars: (Tournamen
   );
 }
 
-export default function FixtureView({ phase, tournamentCars, maxQualifiers }: {
-  phase: TournamentPhase; tournamentCars: TournamentCar[]; maxQualifiers: number;
+export default function FixtureView({ phase, tournamentCars, maxQualifiers, compact }: {
+  phase: TournamentPhase; tournamentCars: TournamentCar[]; maxQualifiers: number; compact?: boolean;
 }) {
   const groups = buildGroups(tournamentCars, maxQualifiers);
   return (
@@ -46,8 +65,8 @@ export default function FixtureView({ phase, tournamentCars, maxQualifiers }: {
           <p className="text-xs text-muted mt-1">Los {maxQualifiers} autos más votados clasifican al mundial.</p>
         </div>
       )}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {groups.map((group) => <GroupCard key={group.letter} group={group} phase={phase} />)}
+      <div className={compact ? "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3" : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"}>
+        {groups.map((group) => <GroupCard key={group.letter} group={group} phase={phase} compact={compact} />)}
       </div>
     </div>
   );

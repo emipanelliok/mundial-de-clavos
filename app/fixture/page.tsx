@@ -42,20 +42,23 @@ export default async function FixturePage() {
           <PhaseBar phase={phase} />
         </div>
       </div>
-      <div className="flex-1 px-4 py-6">
-        <div className="max-w-5xl mx-auto space-y-10">
-          <div>
-            <h2 className="font-display text-2xl text-ink mb-4 tracking-wide">FASE DE GRUPOS</h2>
-            <FixtureView phase={phase} tournamentCars={cars} maxQualifiers={maxQualifiers} />
-          </div>
-
-          <div>
-            <h2 className="font-display text-2xl text-ink mb-1 tracking-wide">LAS LLAVES</h2>
-            <p className="text-xs text-muted mb-4">
+      <div className="flex-1 py-6 space-y-12">
+        {/* LAS LLAVES — protagonista, ancho completo */}
+        <div>
+          <div className="px-4 max-w-6xl mx-auto mb-4">
+            <h2 className="font-display text-4xl text-ink tracking-wide leading-none">LAS LLAVES</h2>
+            <p className="text-xs text-muted mt-1">
               El camino al título. Se completa a medida que avanzan las rondas.
+              <span className="sm:hidden"> Deslizá para ver todo el cuadro →</span>
             </p>
-            <Bracket matches={bracketMatches} />
           </div>
+          <Bracket matches={bracketMatches} />
+        </div>
+
+        {/* FASE DE GRUPOS — secundario, más chico */}
+        <div className="px-4 max-w-5xl mx-auto">
+          <h2 className="font-display text-xl text-muted mb-3 tracking-wide">FASE DE GRUPOS</h2>
+          <FixtureView phase={phase} tournamentCars={cars} maxQualifiers={maxQualifiers} compact />
         </div>
       </div>
       <footer className="px-4 py-6 text-center border-t border-border">
